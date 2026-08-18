@@ -1,0 +1,842 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Radical Chaos Engine + Enhanced Harmonic Dial</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      user-select: none;
+      -webkit-user-select: none;
+      touch-action: none;
+    }
+    body {
+      background-color: #0d0a0b;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      margin: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      color: #e2c092;
+      overflow: hidden;
+    }
+
+    .sound-machine {
+      --chassis-hue: 350;
+      width: 560px;
+      padding: 25px 25px;
+      background: radial-gradient(circle at 50% 30%, hsl(var(--chassis-hue), 68%, 21%), hsl(var(--chassis-hue), 70%, 10%) 80%);
+      border-radius: 24px;
+      box-shadow: 
+        inset 2px 2px 6px rgba(255,255,255,0.15),
+        inset -3px -3px 10px rgba(0,0,0,0.85),
+        0 25px 50px rgba(0,0,0,0.8);
+      border: 4px solid hsl(var(--chassis-hue), 70%, 6%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+      position: relative;
+      transition: background 0.5s ease, border-color 0.5s ease;
+    }
+
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      width: 100%;
+      padding: 0 5px;
+    }
+
+    .title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      letter-spacing: 3px;
+      color: #d4af37;
+      text-transform: uppercase;
+      text-shadow: 1px 1px 3px rgba(0,0,0,0.9), 0 0 8px rgba(212,175,55,0.3);
+    }
+
+    .top-actions {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+    }
+
+    .top-btn-group {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .top-btn-label {
+      font-size: 0.55rem;
+      font-weight: 700;
+      letter-spacing: 0.8px;
+      color: #b89870;
+      text-transform: uppercase;
+    }
+
+    .color-btn {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: conic-gradient(red, yellow, lime, cyan, blue, magenta, red);
+      border: 2px solid #2b1e03;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.8);
+      cursor: pointer;
+    }
+
+    .record-btn {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 30% 30%, #ffaaaa, #8b2222 70%, #3d0000);
+      border: 2px solid #2b1e03;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.8);
+      cursor: pointer;
+      position: relative;
+      transition: all 0.2s;
+    }
+
+    .record-btn.recording {
+      background: radial-gradient(circle at 30% 30%, #ff4444, #cc0000 60%, #660000);
+      box-shadow: 0 0 12px #ff0000, inset 0 1px 3px rgba(255,255,255,0.8);
+      animation: pulseRecord 1s infinite alternate;
+    }
+
+    @keyframes pulseRecord {
+      0% { transform: scale(1); }
+      100% { transform: scale(1.1); }
+    }
+
+    .power-btn {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 30% 30%, #f3e5ab, #8b0000 70%, #3d0000);
+      border: 2px solid #2b1e03;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.8);
+      cursor: pointer;
+      position: relative;
+    }
+
+    .power-btn.active {
+      background: radial-gradient(circle at 30% 30%, #ff6b6b, #ff0000 60%, #8b0000);
+      box-shadow: 0 0 10px #ff0000, inset 0 1px 3px rgba(255,255,255,0.8);
+    }
+
+    .controls-container {
+      display: flex;
+      justify-content: space-around;
+      width: 100%;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .control-group {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .control-label {
+      font-size: 0.62rem;
+      font-weight: 700;
+      letter-spacing: 1px;
+      color: #b89870;
+      text-transform: uppercase;
+      text-align: center;
+    }
+
+    .brass-knob-btn {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 30% 30%, #f3e5ab, #c5a059 50%, #5c4000 90%);
+      border: 2px solid #2b1e03;
+      box-shadow: 0 6px 12px rgba(0,0,0,0.6), inset 0 2px 4px rgba(255,255,255,0.6);
+      cursor: pointer;
+    }
+
+    .brass-dial-container {
+      width: 70px;
+      height: 70px;
+      position: relative;
+    }
+
+    .brass-dial {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      background: radial-gradient(circle at 35% 35%, #f3e5ab, #b8860b 55%, #3d2b00);
+      border: 3px solid #231802;
+      box-shadow: 0 6px 12px rgba(0,0,0,0.7), inset 0 2px 5px rgba(255,255,255,0.6);
+      cursor: grab;
+      position: relative;
+      touch-action: none;
+    }
+
+    .dial-indicator {
+      position: absolute;
+      top: 6px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 4px;
+      height: 14px;
+      background-color: #201301;
+      border-radius: 2px;
+      pointer-events: none;
+    }
+
+    .filter-section {
+      width: 100%;
+      background: rgba(0, 0, 0, 0.25);
+      border: 1px solid rgba(212, 175, 55, 0.2);
+      border-radius: 12px;
+      padding: 10px 15px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .filter-section-title {
+      font-size: 0.65rem;
+      font-weight: 800;
+      letter-spacing: 1.5px;
+      color: #00ffcc;
+      text-transform: uppercase;
+    }
+
+    .filter-knobs {
+      display: flex;
+      gap: 20px;
+    }
+
+    .brass-vol-container {
+      width: 46px;
+      height: 46px;
+      position: relative;
+    }
+
+    .brass-vol-knob {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      background: radial-gradient(circle at 35% 35%, #e6ca65, #a37409 60%, #2e2001);
+      border: 2px solid #1a1201;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.6);
+      cursor: grab;
+      position: relative;
+      touch-action: none;
+    }
+
+    .vol-indicator {
+      position: absolute;
+      top: 4px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 3px;
+      height: 8px;
+      background-color: #1a1201;
+      border-radius: 1px;
+      pointer-events: none;
+    }
+
+    .bottom-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      width: 100%;
+      padding: 0 5px;
+    }
+
+    .status {
+      font-size: 0.72rem;
+      color: #9e7f68;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="sound-machine" id="machineChassis">
+    <div class="top-bar">
+      <div class="title">Radical Engine</div>
+      <div class="top-actions">
+        <div class="top-btn-group">
+          <button class="record-btn" id="recordBtn" title="Record Audio (Start/Stop)" style="opacity: 0.5; pointer-events: none;"></button>
+          <span class="top-btn-label">Record</span>
+        </div>
+
+        <div class="top-btn-group">
+          <button class="color-btn" id="colorBtn" title="Shift Machine Color"></button>
+          <span class="top-btn-label">Color</span>
+        </div>
+
+        <div class="top-btn-group">
+          <button class="power-btn" id="powerBtn" title="Power On/Off"></button>
+          <span class="top-btn-label">Power</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="controls-container">
+      <div class="control-group">
+        <button class="brass-knob-btn" id="generateBtn"></button>
+        <span class="control-label">Generate</span>
+      </div>
+
+      <div class="control-group">
+        <div class="brass-dial-container">
+          <div class="brass-dial" id="macroKnob1">
+            <div class="dial-indicator"></div>
+          </div>
+        </div>
+        <span class="control-label" style="color: #ffaa55;">S&H Chaos</span>
+      </div>
+
+      <div class="control-group">
+        <div class="brass-dial-container">
+          <div class="brass-dial" id="macroKnob2">
+            <div class="dial-indicator"></div>
+          </div>
+        </div>
+        <span class="control-label" style="color: #ff5555;">Harmonic LFO</span>
+      </div>
+
+      <div class="control-group">
+        <div class="brass-dial-container">
+          <div class="brass-dial" id="macroKnob3">
+            <div class="dial-indicator"></div>
+          </div>
+        </div>
+        <span class="control-label" style="color: #55aaff;">Sub & Crush</span>
+      </div>
+    </div>
+
+    <div class="filter-section">
+      <span class="filter-section-title">Low Pass Filter</span>
+      <div class="filter-knobs">
+        <div class="control-group">
+          <div class="brass-vol-container">
+            <div class="brass-vol-knob" id="lpCutoffKnob" style="transform: rotate(135deg);">
+              <div class="vol-indicator"></div>
+            </div>
+          </div>
+          <span class="control-label" style="font-size: 0.55rem; color: #00ffcc;">Cutoff</span>
+        </div>
+
+        <div class="control-group">
+          <div class="brass-vol-container">
+            <div class="brass-vol-knob" id="lpResoKnob" style="transform: rotate(-135deg);">
+              <div class="vol-indicator"></div>
+            </div>
+          </div>
+          <span class="control-label" style="font-size: 0.55rem; color: #00ffcc;">Resonance</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="bottom-row">
+      <div class="status" id="statusText">Power OFF</div>
+
+      <div style="display: flex; gap: 15px;">
+        <div class="control-group">
+          <div class="brass-vol-container">
+            <div class="brass-vol-knob" id="reverbKnob" style="transform: rotate(-45deg);">
+              <div class="vol-indicator"></div>
+            </div>
+          </div>
+          <span class="control-label" style="font-size: 0.55rem;">Reverb</span>
+        </div>
+
+        <div class="control-group">
+          <div class="brass-vol-container">
+            <div class="brass-vol-knob" id="volKnob" style="transform: rotate(45deg);">
+              <div class="vol-indicator"></div>
+            </div>
+          </div>
+          <span class="control-label" style="font-size: 0.55rem;">Volume</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let audioCtx = null;
+    let isPowerOn = false;
+
+    let primaryOsc1 = null, primaryOsc2 = null;
+    let lfoSine = null, lfoSineGain = null;
+    let lfoSquareSaw = null, squareWidthGain = null, squareShaper = null, squareLfoGainNode = null;
+    let mainGain = null, masterVolumeNode = null;
+    let highPassFilter = null, multiplierOsc = null, multiplierGain = null;
+    let reverbNode = null, wetGain = null, dryGain = null;
+
+    let lowPassFilterNode = null;
+    let lpCutoffFreq = 20000;
+    let lpResonanceVal = 1;
+
+    let extremeHarmonicOsc = null, extremeHarmonicLfo = null, extremeHarmonicGain = null;
+    let extremeDistortion = null, harmonicFmGain = null, harmonicIntervalTimer = null;
+    
+    // NEW: 13th Harmonic sub-octave oscillator & gain
+    let h13Osc = null, h13Gain = null;
+
+    let subOsc = null, subGain = null, gateLfo = null, gateGain = null;
+    let chaosTimer = null;
+
+    let mediaRecorder = null;
+    let recordedChunks = [];
+    let destStreamNode = null;
+    let isRecording = false;
+
+    let currentBaseFreq = 440;
+    let isPlaying = false;
+    let masterVolume = 0.7, reverbMix = 0.25;
+
+    const colorPalette = Array.from({ length: 50 }, (_, i) => Math.round((360 / 50) * i));
+    let colorIndex = 0;
+
+    const powerBtn = document.getElementById('powerBtn');
+    const colorBtn = document.getElementById('colorBtn');
+    const recordBtn = document.getElementById('recordBtn');
+    const statusText = document.getElementById('statusText');
+    const machineChassis = document.getElementById('machineChassis');
+
+    colorBtn.addEventListener('click', () => {
+      colorIndex = (colorIndex + 1) % colorPalette.length;
+      machineChassis.style.setProperty('--chassis-hue', colorPalette[colorIndex]);
+    });
+
+    powerBtn.addEventListener('click', () => {
+      isPowerOn = !isPowerOn;
+      powerBtn.classList.toggle('active', isPowerOn);
+
+      if (isPowerOn) {
+        initAudio();
+        statusText.innerText = "Ready - Press 'Generate'";
+        recordBtn.style.opacity = "1";
+        recordBtn.style.pointerEvents = "auto";
+      } else {
+        stopCurrentSound();
+        if (isRecording) stopRecording();
+        if (audioCtx) audioCtx.suspend();
+        statusText.innerText = "Power OFF";
+        recordBtn.style.opacity = "0.5";
+        recordBtn.style.pointerEvents = "none";
+      }
+    });
+
+    function initAudio() {
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        
+        masterVolumeNode = audioCtx.createGain();
+        masterVolumeNode.gain.setValueAtTime(masterVolume, audioCtx.currentTime);
+        masterVolumeNode.connect(audioCtx.destination);
+
+        destStreamNode = audioCtx.createMediaStreamDestination();
+        masterVolumeNode.connect(destStreamNode);
+
+        setupReverb();
+      }
+      if (audioCtx.state === 'suspended' && isPowerOn) {
+        audioCtx.resume();
+      }
+    }
+
+    recordBtn.addEventListener('click', () => {
+      if (!isPowerOn) return;
+      if (!isRecording) {
+        startRecording();
+      } else {
+        stopRecording();
+      }
+    });
+
+    function startRecording() {
+      recordedChunks = [];
+      try {
+        const options = { mimeType: 'audio/webm;codecs=opus' };
+        mediaRecorder = new MediaRecorder(destStreamNode.stream, options);
+      } catch (e) {
+        try {
+          mediaRecorder = new MediaRecorder(destStreamNode.stream);
+        } catch (err) {
+          statusText.innerText = "Recording not supported";
+          return;
+        }
+      }
+
+      mediaRecorder.ondataavailable = (event) => {
+        if (event.data && event.data.size > 0) {
+          recordedChunks.push(event.data);
+        }
+      };
+
+      mediaRecorder.onstop = () => {
+        const blob = new Blob(recordedChunks, { type: 'audio/webm' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.style.display = 'none';
+        a.href = url;
+        a.download = `chaos-machine-${Date.now()}.webm`;
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(() => {
+          document.body.removeChild(a);
+          window.URL.revokeObjectURL(url);
+        }, 100);
+        statusText.innerText = "Exported recording file!";
+      };
+
+      mediaRecorder.start();
+      isRecording = true;
+      recordBtn.classList.add('recording');
+      statusText.innerText = "Recording audio...";
+    }
+
+    function stopRecording() {
+      if (mediaRecorder && isRecording) {
+        mediaRecorder.stop();
+        isRecording = false;
+        recordBtn.classList.remove('recording');
+      }
+    }
+
+    function setupReverb() {
+      reverbNode = audioCtx.createConvolver();
+      const rate = audioCtx.sampleRate;
+      const length = rate * 1.5;
+      const impulse = audioCtx.createBuffer(2, length, rate);
+      const left = impulse.getChannelData(0), right = impulse.getChannelData(1);
+
+      for (let i = 0; i < length; i++) {
+        const decay = Math.exp(-i / (rate * 0.3));
+        left[i] = (Math.random() * 2 - 1) * decay;
+        right[i] = (Math.random() * 2 - 1) * decay;
+      }
+      reverbNode.buffer = impulse;
+    }
+
+    function makeDistortionCurve(amount) {
+      const k = amount, n_samples = 44100, curve = new Float32Array(n_samples), deg = Math.PI / 180;
+      for (let i = 0; i < n_samples; ++i) {
+        let x = (i * 2) / n_samples - 1;
+        curve[i] = ((3 + k) * x * 20 * deg) / (Math.PI + k * Math.abs(x));
+      }
+      return curve;
+    }
+
+    function createSquareCurve() {
+      const curve = new Float32Array(256);
+      for (let i = 0; i < 256; i++) curve[i] = i < 128 ? -0.5 : 0.5;
+      return curve;
+    }
+
+    document.getElementById('generateBtn').addEventListener('click', () => {
+      if (!isPowerOn) return;
+      initAudio();
+      stopCurrentSound();
+
+      currentBaseFreq = 60 * Math.pow(4000 / 60, Math.random());
+
+      highPassFilter = audioCtx.createBiquadFilter();
+      highPassFilter.type = 'highpass';
+      highPassFilter.frequency.setValueAtTime(80, audioCtx.currentTime);
+
+      lowPassFilterNode = audioCtx.createBiquadFilter();
+      lowPassFilterNode.type = 'lowpass';
+      lowPassFilterNode.frequency.setValueAtTime(lpCutoffFreq, audioCtx.currentTime);
+      lowPassFilterNode.Q.setValueAtTime(lpResonanceVal, audioCtx.currentTime);
+
+      mainGain = audioCtx.createGain();
+      mainGain.gain.setValueAtTime(0.25, audioCtx.currentTime);
+
+      primaryOsc1 = audioCtx.createOscillator();
+      primaryOsc1.type = 'sawtooth';
+      primaryOsc1.frequency.setValueAtTime(currentBaseFreq, audioCtx.currentTime);
+
+      primaryOsc2 = audioCtx.createOscillator();
+      primaryOsc2.type = 'square';
+      primaryOsc2.frequency.setValueAtTime(currentBaseFreq * 1.5, audioCtx.currentTime);
+
+      const mixGain = audioCtx.createGain();
+      mixGain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+      primaryOsc1.connect(mixGain);
+      primaryOsc2.connect(mixGain);
+      mixGain.connect(highPassFilter);
+      primaryOsc1.start(); primaryOsc2.start();
+
+      lfoSine = audioCtx.createOscillator();
+      lfoSine.frequency.setValueAtTime(Math.random() * 20 + 2, audioCtx.currentTime);
+      lfoSineGain = audioCtx.createGain();
+      lfoSineGain.gain.setValueAtTime(currentBaseFreq * 0.2, audioCtx.currentTime);
+      lfoSine.connect(lfoSineGain);
+      lfoSineGain.connect(primaryOsc1.frequency);
+      lfoSine.start();
+
+      lfoSquareSaw = audioCtx.createOscillator();
+      lfoSquareSaw.type = 'sawtooth';
+      lfoSquareSaw.frequency.setValueAtTime(Math.random() * 15 + 2, audioCtx.currentTime);
+      squareWidthGain = audioCtx.createGain();
+      squareShaper = audioCtx.createWaveShaper();
+      squareShaper.curve = createSquareCurve();
+      lfoSquareSaw.connect(squareShaper);
+      squareLfoGainNode = audioCtx.createGain();
+      squareLfoGainNode.gain.setValueAtTime(0.8, audioCtx.currentTime);
+      squareShaper.connect(squareLfoGainNode.gain);
+      lfoSquareSaw.start();
+
+      multiplierOsc = audioCtx.createOscillator();
+      multiplierOsc.type = 'sine';
+      multiplierOsc.frequency.setValueAtTime(1000, audioCtx.currentTime);
+      multiplierGain = audioCtx.createGain();
+      multiplierGain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+      multiplierOsc.connect(multiplierGain);
+      multiplierGain.connect(highPassFilter);
+      multiplierOsc.start();
+
+      // HARMONIC LFO SECTION + 13th HARMONIC
+      extremeHarmonicOsc = audioCtx.createOscillator();
+      extremeHarmonicOsc.type = 'sawtooth';
+      extremeHarmonicOsc.frequency.setValueAtTime(currentBaseFreq * 4, audioCtx.currentTime);
+
+      extremeHarmonicLfo = audioCtx.createOscillator();
+      extremeHarmonicLfo.type = 'square';
+      extremeHarmonicLfo.frequency.setValueAtTime(5, audioCtx.currentTime);
+
+      extremeHarmonicGain = audioCtx.createGain();
+      extremeHarmonicGain.gain.setValueAtTime(0, audioCtx.currentTime);
+
+      extremeDistortion = audioCtx.createWaveShaper();
+      extremeDistortion.curve = makeDistortionCurve(0);
+
+      harmonicFmGain = audioCtx.createGain();
+      harmonicFmGain.gain.setValueAtTime(0, audioCtx.currentTime);
+
+      extremeHarmonicLfo.connect(extremeHarmonicGain.gain);
+      extremeHarmonicOsc.connect(extremeHarmonicGain);
+      extremeHarmonicGain.connect(extremeDistortion);
+      extremeDistortion.connect(highPassFilter);
+      extremeDistortion.connect(harmonicFmGain);
+      harmonicFmGain.connect(primaryOsc1.frequency);
+
+      extremeHarmonicOsc.start(); extremeHarmonicLfo.start();
+
+      // 13th Harmonic Oscillator (Octave down = 13 * 0.5 = 6.5 x baseFreq)
+      h13Osc = audioCtx.createOscillator();
+      h13Osc.type = 'sawtooth';
+      h13Osc.frequency.setValueAtTime(currentBaseFreq * 6.5, audioCtx.currentTime);
+
+      h13Gain = audioCtx.createGain();
+      h13Gain.gain.setValueAtTime(0, audioCtx.currentTime);
+
+      h13Osc.connect(h13Gain);
+      h13Gain.connect(highPassFilter);
+      h13Osc.start();
+
+      harmonicIntervalTimer = setInterval(() => {
+        if (isPlaying && extremeHarmonicOsc) {
+          const glitchMultiplier = Math.floor(Math.random() * 8) + 4;
+          extremeHarmonicOsc.frequency.setTargetAtTime(currentBaseFreq * glitchMultiplier, audioCtx.currentTime, 0.01);
+        }
+      }, 100);
+
+      subOsc = audioCtx.createOscillator();
+      subOsc.type = 'triangle';
+      subOsc.frequency.setValueAtTime(currentBaseFreq * 0.5, audioCtx.currentTime);
+      subGain = audioCtx.createGain();
+      subGain.gain.setValueAtTime(0, audioCtx.currentTime);
+      subOsc.connect(subGain);
+      subGain.connect(lowPassFilterNode);
+      subOsc.start();
+
+      gateLfo = audioCtx.createOscillator();
+      gateLfo.type = 'square';
+      gateLfo.frequency.setValueAtTime(8, audioCtx.currentTime);
+      gateGain = audioCtx.createGain();
+      gateGain.gain.setValueAtTime(1, audioCtx.currentTime);
+      gateLfo.connect(gateGain.gain);
+      gateLfo.start();
+
+      highPassFilter.connect(squareLfoGainNode);
+      squareLfoGainNode.connect(gateGain);
+      gateGain.connect(lowPassFilterNode);
+
+      lowPassFilterNode.connect(mainGain);
+
+      dryGain = audioCtx.createGain();
+      wetGain = audioCtx.createGain();
+      dryGain.gain.setValueAtTime(1 - reverbMix, audioCtx.currentTime);
+      wetGain.gain.setValueAtTime(reverbMix, audioCtx.currentTime);
+
+      mainGain.connect(dryGain);
+      mainGain.connect(reverbNode);
+      reverbNode.connect(wetGain);
+
+      dryGain.connect(masterVolumeNode);
+      wetGain.connect(masterVolumeNode);
+
+      isPlaying = true;
+      statusText.innerText = `Active: ${Math.round(currentBaseFreq)} Hz`;
+    });
+
+    function stopCurrentSound() {
+      if (!isPlaying) return;
+      if (harmonicIntervalTimer) clearInterval(harmonicIntervalTimer);
+      if (chaosTimer) clearInterval(chaosTimer);
+      try {
+        if (primaryOsc1) primaryOsc1.stop();
+        if (primaryOsc2) primaryOsc2.stop();
+        if (lfoSine) lfoSine.stop();
+        if (lfoSquareSaw) lfoSquareSaw.stop();
+        if (multiplierOsc) multiplierOsc.stop();
+        if (extremeHarmonicOsc) extremeHarmonicOsc.stop();
+        if (extremeHarmonicLfo) extremeHarmonicLfo.stop();
+        if (h13Osc) h13Osc.stop();
+        if (subOsc) subOsc.stop();
+        if (gateLfo) gateLfo.stop();
+      } catch(e){}
+      isPlaying = false;
+    }
+
+    function setupDial(element, onMove) {
+      let isDragging = false, startY = 0, rotation = 0;
+      element.addEventListener('pointerdown', (e) => {
+        if (!isPowerOn) return;
+        e.preventDefault(); isDragging = true; startY = e.clientY;
+        element.setPointerCapture(e.pointerId);
+      });
+      element.addEventListener('pointermove', (e) => {
+        if (!isDragging || !isPowerOn) return;
+        e.preventDefault();
+        const deltaY = startY - e.clientY; startY = e.clientY;
+        rotation = Math.max(-150, Math.min(150, rotation + deltaY * 2.5));
+        element.style.transform = `rotate(${rotation}deg)`;
+        onMove(rotation / 150, rotation);
+      });
+      const end = (e) => { if (isDragging) { isDragging = false; try { element.releasePointerCapture(e.pointerId); } catch(err){} } };
+      element.addEventListener('pointerup', end);
+      element.addEventListener('pointercancel', end);
+    }
+
+    setupDial(document.getElementById('macroKnob1'), (x) => {
+      if (!isPlaying) return;
+      const norm = Math.max(0, (x + 1) / 2);
+      const octaveMultiplier = Math.pow(2, (norm - 0.5) * 6);
+      const targetBase = currentBaseFreq * octaveMultiplier;
+      primaryOsc1.frequency.setTargetAtTime(targetBase, audioCtx.currentTime, 0.01);
+      primaryOsc2.frequency.setTargetAtTime(targetBase * 1.5, audioCtx.currentTime, 0.01);
+
+      if (chaosTimer) clearInterval(chaosTimer);
+      if (norm > 0.1) {
+        const intervalMs = Math.max(20, 300 - norm * 280);
+        chaosTimer = setInterval(() => {
+          if (isPlaying) {
+            const randomPitch = targetBase * (0.5 + Math.random() * norm * 3);
+            primaryOsc1.frequency.setTargetAtTime(randomPitch, audioCtx.currentTime, 0.005);
+            lfoSine.frequency.setTargetAtTime(norm * 80 + 2, audioCtx.currentTime, 0.005);
+          }
+        }, intervalMs);
+      }
+
+      multiplierOsc.frequency.setTargetAtTime(norm * 8000 + 100, audioCtx.currentTime, 0.01);
+      multiplierGain.gain.setTargetAtTime(norm * 0.8, audioCtx.currentTime, 0.01);
+    });
+
+    // HARMONIC LFO KNOB CONTROL (Updated with 13th Harmonic Shift)
+    setupDial(document.getElementById('macroKnob2'), (x) => {
+      if (!isPlaying || !extremeHarmonicGain) return;
+      const norm = Math.max(0, (x + 1) / 2);
+      
+      // Original distortion & FM synthesis modulation
+      extremeHarmonicGain.gain.setTargetAtTime(Math.pow(norm, 2) * 1.5, audioCtx.currentTime, 0.02);
+      extremeDistortion.curve = makeDistortionCurve(norm * 500);
+      harmonicFmGain.gain.setTargetAtTime(norm * currentBaseFreq * 3, audioCtx.currentTime, 0.02);
+      extremeHarmonicLfo.frequency.setTargetAtTime(2 + norm * 50, audioCtx.currentTime, 0.02);
+
+      // 13th Harmonic sub-octave logic with octave/interval jump shifts
+      if (h13Gain && h13Osc) {
+        // Increase gain as dial turns up
+        h13Gain.gain.setTargetAtTime(norm * 0.45, audioCtx.currentTime, 0.02);
+        
+        // Multiplier steps based on dial position: discrete jumps up and down
+        // Uses base 6.5 (13th harmonic octave down) multiplied by jumping factors
+        const jumpMultipliers = [0.25, 0.5, 1.0, 0.75, 1.5, 0.5, 2.0, 1.25, 3.0];
+        const stepIndex = Math.min(
+          jumpMultipliers.length - 1, 
+          Math.floor(norm * jumpMultipliers.length)
+        );
+        const jumpFactor = jumpMultipliers[stepIndex];
+        
+        const h13TargetFreq = currentBaseFreq * 6.5 * jumpFactor;
+        h13Osc.frequency.setTargetAtTime(h13TargetFreq, audioCtx.currentTime, 0.01);
+      }
+    });
+
+    setupDial(document.getElementById('macroKnob3'), (x) => {
+      if (!isPlaying || !subGain) return;
+      const norm = Math.max(0, (x + 1) / 2);
+      subGain.gain.setTargetAtTime(norm * 0.7, audioCtx.currentTime, 0.02);
+      subOsc.frequency.setTargetAtTime(currentBaseFreq * 0.25, audioCtx.currentTime, 0.02);
+      gateLfo.frequency.setTargetAtTime(norm * 30 + 1, audioCtx.currentTime, 0.02);
+      squareWidthGain.gain.setTargetAtTime(norm * 3.5, audioCtx.currentTime, 0.01);
+    });
+
+    function setupSmallKnob(element, initialRot, onMove) {
+      let isDragging = false, startY = 0, rotation = initialRot;
+      element.addEventListener('pointerdown', (e) => {
+        if (!isPowerOn) return;
+        e.preventDefault(); isDragging = true; startY = e.clientY;
+        element.setPointerCapture(e.pointerId);
+      });
+      element.addEventListener('pointermove', (e) => {
+        if (!isDragging || !isPowerOn) return;
+        e.preventDefault();
+        const deltaY = startY - e.clientY; startY = e.clientY;
+        rotation = Math.max(-135, Math.min(135, rotation + deltaY * 2));
+        element.style.transform = `rotate(${rotation}deg)`;
+        onMove((rotation + 135) / 270);
+      });
+      const end = (e) => { if (isDragging) { isDragging = false; try { element.releasePointerCapture(e.pointerId); } catch(err){} } };
+      element.addEventListener('pointerup', end);
+      element.addEventListener('pointercancel', end);
+    }
+
+    setupSmallKnob(document.getElementById('lpCutoffKnob'), 135, (norm) => {
+      lpCutoffFreq = 20 * Math.pow(20000 / 20, norm);
+      if (lowPassFilterNode) {
+        lowPassFilterNode.frequency.setTargetAtTime(lpCutoffFreq, audioCtx.currentTime, 0.02);
+      }
+    });
+
+    setupSmallKnob(document.getElementById('lpResoKnob'), -135, (norm) => {
+      lpResonanceVal = norm * 25 + 0.1;
+      if (lowPassFilterNode) {
+        lowPassFilterNode.Q.setTargetAtTime(lpResonanceVal, audioCtx.currentTime, 0.02);
+      }
+    });
+
+    setupSmallKnob(document.getElementById('reverbKnob'), -45, (norm) => {
+      reverbMix = norm;
+      if (wetGain && dryGain) {
+        wetGain.gain.setTargetAtTime(reverbMix, audioCtx.currentTime, 0.02);
+        dryGain.gain.setTargetAtTime(1 - reverbMix, audioCtx.currentTime, 0.02);
+      }
+    });
+
+    setupSmallKnob(document.getElementById('volKnob'), 45, (norm) => {
+      masterVolume = Math.pow(norm, 2);
+      if (masterVolumeNode) {
+        masterVolumeNode.gain.setTargetAtTime(masterVolume, audioCtx.currentTime, 0.02);
+      }
+    });
+  </script>
+</body>
+</html>
