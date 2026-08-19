@@ -9,7 +9,7 @@
       box-sizing: border-box;
       user-select: none;
       -webkit-user-select: none;
-      touch-action: none;
+      touch-action: none; /* מונע מחוות גלילה בכל העמוד */
     }
     body {
       background-color: #0d0a0b;
@@ -21,6 +21,7 @@
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       color: #e2c092;
       overflow: hidden;
+      touch-action: none;
     }
 
     .sound-machine {
@@ -40,6 +41,7 @@
       gap: 16px;
       position: relative;
       transition: background 0.5s ease, border-color 0.5s ease;
+      touch-action: none;
     }
 
     .top-bar {
@@ -88,6 +90,7 @@
       border: 2px solid #2b1e03;
       box-shadow: 0 2px 5px rgba(0,0,0,0.8);
       cursor: pointer;
+      touch-action: none;
     }
 
     .record-btn {
@@ -100,6 +103,7 @@
       cursor: pointer;
       position: relative;
       transition: all 0.2s;
+      touch-action: none;
     }
 
     .record-btn.recording {
@@ -122,6 +126,7 @@
       box-shadow: 0 2px 5px rgba(0,0,0,0.8);
       cursor: pointer;
       position: relative;
+      touch-action: none;
     }
 
     .power-btn.active {
@@ -161,12 +166,14 @@
       border: 2px solid #2b1e03;
       box-shadow: 0 6px 12px rgba(0,0,0,0.6), inset 0 2px 4px rgba(255,255,255,0.6);
       cursor: pointer;
+      touch-action: none;
     }
 
     .brass-dial-container {
       width: 70px;
       height: 70px;
       position: relative;
+      touch-action: none;
     }
 
     .brass-dial {
@@ -221,6 +228,7 @@
       width: 46px;
       height: 46px;
       position: relative;
+      touch-action: none;
     }
 
     .brass-vol-knob {
@@ -708,22 +716,48 @@
 
     function setupDial(element, onMove) {
       let isDragging = false, startY = 0, rotation = 0;
-      element.addEventListener('pointerdown', (e) => {
+
+      const handleStart = (e) => {
         if (!isPowerOn) return;
-        e.preventDefault(); isDragging = true; startY = e.clientY;
-        element.setPointerCapture(e.pointerId);
-      });
-      element.addEventListener('pointermove', (e) => {
+        if (e.cancelable) e.preventDefault();
+        e.stopPropagation();
+        isDragging = true;
+        startY = e.touches ? e.touches[0].clientY : e.clientY;
+        if (e.pointerId && element.setPointerCapture) {
+          try { element.setPointerCapture(e.pointerId); } catch(err){}
+        }
+      };
+
+      const handleMove = (e) => {
         if (!isDragging || !isPowerOn) return;
-        e.preventDefault();
-        const deltaY = startY - e.clientY; startY = e.clientY;
+        if (e.cancelable) e.preventDefault();
+        e.stopPropagation();
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        const deltaY = startY - clientY;
+        startY = clientY;
         rotation = Math.max(-150, Math.min(150, rotation + deltaY * 2.5));
         element.style.transform = `rotate(${rotation}deg)`;
         onMove(rotation / 150, rotation);
-      });
-      const end = (e) => { if (isDragging) { isDragging = false; try { element.releasePointerCapture(e.pointerId); } catch(err){} } };
-      element.addEventListener('pointerup', end);
-      element.addEventListener('pointercancel', end);
+      };
+
+      const handleEnd = (e) => {
+        if (isDragging) {
+          isDragging = false;
+          if (e.pointerId && element.releasePointerCapture) {
+            try { element.releasePointerCapture(e.pointerId); } catch(err){}
+          }
+        }
+      };
+
+      element.addEventListener('pointerdown', handleStart, { passive: false });
+      element.addEventListener('pointermove', handleMove, { passive: false });
+      element.addEventListener('pointerup', handleEnd, { passive: false });
+      element.addEventListener('pointercancel', handleEnd, { passive: false });
+
+      // גיבוי ייעודי למכשירי Touch שאינם תומכים מלא ב-Pointer Events
+      element.addEventListener('touchstart', handleStart, { passive: false });
+      element.addEventListener('touchmove', handleMove, { passive: false });
+      element.addEventListener('touchend', handleEnd, { passive: false });
     }
 
     setupDial(document.getElementById('macroKnob1'), (x) => {
@@ -791,22 +825,48 @@
 
     function setupSmallKnob(element, initialRot, onMove) {
       let isDragging = false, startY = 0, rotation = initialRot;
-      element.addEventListener('pointerdown', (e) => {
+
+      const handleStart = (e) => {
         if (!isPowerOn) return;
-        e.preventDefault(); isDragging = true; startY = e.clientY;
-        element.setPointerCapture(e.pointerId);
-      });
-      element.addEventListener('pointermove', (e) => {
+        if (e.cancelable) e.preventDefault();
+        e.stopPropagation();
+        isDragging = true;
+        startY = e.touches ? e.touches[0].clientY : e.clientY;
+        if (e.pointerId && element.setPointerCapture) {
+          try { element.setPointerCapture(e.pointerId); } catch(err){}
+        }
+      };
+
+      const handleMove = (e) => {
         if (!isDragging || !isPowerOn) return;
-        e.preventDefault();
-        const deltaY = startY - e.clientY; startY = e.clientY;
+        if (e.cancelable) e.preventDefault();
+        e.stopPropagation();
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        const deltaY = startY - clientY;
+        startY = clientY;
         rotation = Math.max(-135, Math.min(135, rotation + deltaY * 2));
         element.style.transform = `rotate(${rotation}deg)`;
         onMove((rotation + 135) / 270);
-      });
-      const end = (e) => { if (isDragging) { isDragging = false; try { element.releasePointerCapture(e.pointerId); } catch(err){} } };
-      element.addEventListener('pointerup', end);
-      element.addEventListener('pointercancel', end);
+      };
+
+      const handleEnd = (e) => {
+        if (isDragging) {
+          isDragging = false;
+          if (e.pointerId && element.releasePointerCapture) {
+            try { element.releasePointerCapture(e.pointerId); } catch(err){}
+          }
+        }
+      };
+
+      element.addEventListener('pointerdown', handleStart, { passive: false });
+      element.addEventListener('pointermove', handleMove, { passive: false });
+      element.addEventListener('pointerup', handleEnd, { passive: false });
+      element.addEventListener('pointercancel', handleEnd, { passive: false });
+
+      // גיבוי ייעודי למכשירי Touch
+      element.addEventListener('touchstart', handleStart, { passive: false });
+      element.addEventListener('touchmove', handleMove, { passive: false });
+      element.addEventListener('touchend', handleEnd, { passive: false });
     }
 
     setupSmallKnob(document.getElementById('lpCutoffKnob'), 135, (norm) => {
