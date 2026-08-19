@@ -30,7 +30,9 @@
             padding: 10px;
             box-sizing: border-box;
             user-select: none;
+            -webkit-user-select: none;
             overflow: hidden;
+            touch-action: none; /* מונע מחוות גלילה בכל העמוד */
         }
 
         .studio-rack {
@@ -45,6 +47,7 @@
             box-shadow: 0 15px 40px rgba(0,0,0,0.8), inset 0 1px 2px rgba(184, 233, 134, 0.15);
             direction: ltr;
             box-sizing: border-box;
+            touch-action: none;
         }
 
         .rack-header {
@@ -136,6 +139,7 @@
             justify-content: center;
             align-items: center;
             margin: 2px 0;
+            touch-action: none; /* מונע גלילת מסך בנגיעה בכפתור */
         }
 
         .knob-dial {
@@ -148,6 +152,7 @@
             cursor: ns-resize;
             transition: transform 0.04s ease-out;
             border: 1px solid rgba(136, 192, 87, 0.2);
+            touch-action: none;
         }
 
         .knob-marker {
@@ -556,6 +561,11 @@
 
         function handleMove(e) {
             if (!isDragging) return;
+            
+            // מניעת גלילה בטלפון בזמן הזזת הכפתור
+            if (e.cancelable) e.preventDefault();
+            e.stopPropagation();
+
             const currentY = e.touches ? e.touches[0].clientY : e.clientY;
             const deltaY = startY - currentY;
 
@@ -569,14 +579,31 @@
             updateUI();
         }
 
-        function handleEnd() { isDragging = false; }
+        function handleEnd(e) { 
+            isDragging = false; 
+        }
 
+        // Mouse Events
         knob.addEventListener('mousedown', handleStart);
         document.addEventListener('mousemove', handleMove);
         document.addEventListener('mouseup', handleEnd);
-        knob.addEventListener('touchstart', handleStart);
-        document.addEventListener('touchmove', handleMove);
-        document.addEventListener('touchend', handleEnd);
+
+        // Touch Events עם ביטול גלילה מפורש
+        knob.addEventListener('touchstart', (e) => {
+            if (e.cancelable) e.preventDefault();
+            e.stopPropagation();
+            handleStart(e);
+        }, { passive: false });
+
+        document.addEventListener('touchmove', (e) => {
+            if (isDragging) {
+                if (e.cancelable) e.preventDefault();
+                e.stopPropagation();
+                handleMove(e);
+            }
+        }, { passive: false });
+
+        document.addEventListener('touchend', handleEnd, { passive: false });
     }
 
     function playSingleNote(freq, delayOffset) {
