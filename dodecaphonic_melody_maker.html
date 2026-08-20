@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>DODECAPHONIC MELODY MAKER - RHYTHM MATRIX</title>
+    <title>DODECAPHONIC MELODY MAKER</title>
     <!-- Include lamejs for browser-side MP3 encoding -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/lamejs/1.2.1/lame.min.js"></script>
     <style>
@@ -372,7 +372,7 @@ body {
                     <button class="btn btn-clear" id="tapRhythmBtn">TAP RHYTHM (0/8)</button>
                     <button class="btn btn-clear" style="font-size:10px; padding:6px 10px;" id="resetRhythmBtn">RESET TAP</button>
                 </div>
-                <div class="info-text" id="rhythmInfo">Tap button up to 8 times to generate rhythm values relative to BPM.</div>
+                <div class="info-text" id="rhythmInfo">Tap button generate rhythm values.</div>
                 <div class="rhythm-values-box" id="rhythmDisplay"></div>
             </div>
 
@@ -382,14 +382,14 @@ body {
                     <div class="toggle-switch" id="chordsToggle"></div>
                 </div>
                 <div class="info-text">
-                    Plays 3-4 note chords from the matrix intermittently across sequence steps.
+                    Plays 3-4 note chords from the matrix.
                 </div>
                 <div class="toggle-header" style="margin-top: 10px;">
                     <span class="control-label">ADD COUNTER MELODY</span>
                     <div class="toggle-switch" id="counterMelodyToggle"></div>
                 </div>
                 <div class="info-text">
-                    Generates a secondary polyphonic voice adhering to strict counterpoint (contrary motion, oblique motion, avoiding parallel 5ths/octaves).
+                    Generates a secondary polyphonic voice.
                 </div>
             </div>
         </div>
