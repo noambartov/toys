@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Toys & Sound Engines</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+
+    body {
+      background-color: #f4f4f5;
+      color: #18181b;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 20px;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+
+    header h1 {
+      font-size: 2.5rem;
+      font-weight: 700;
+      letter-spacing: -0.025em;
+      margin-bottom: 8px;
+    }
+
+    header p {
+      color: #71717a;
+      font-size: 1.1rem;
+    }
+
+    .cards-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 24px;
+      width: 100%;
+      max-width: 960px;
+    }
+
+    .card {
+      background: #ffffff;
+      border: 1px solid #e4e4e7;
+      border-radius: 16px;
+      padding: 32px 24px;
+      text-decoration: none;
+      color: inherit;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card:hover {
+      transform: translateY(-6px);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12);
+      border-color: #d4d4d8;
+    }
+
+    .card-tag {
+      align-self: flex-start;
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 4px 10px;
+      border-radius: 20px;
+      background: #f4f4f5;
+      color: #52525b;
+      margin-bottom: 16px;
+    }
+
+    .card h2 {
+      font-size: 1.35rem;
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: #09090b;
+    }
+
+    .card p {
+      font-size: 0.95rem;
+      color: #71717a;
+      line-height: 1.5;
+    }
+
+    .card-footer {
+      margin-top: 24px;
+      display: flex;
+      align-items: center;
+      font-weight: 600;
+      font-size: 0.9rem;
+      color: #2563eb;
+    }
+
+    .card-footer span {
+      transition: transform 0.2s ease;
+      display: inline-block;
+      margin-right: 6px;
+    }
+
+    .card:hover .card-footer span {
+      transform: translateX(-4px);
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>Toys & Sound Engines</h1>
+    <p>בחר מכונה כדי להפעיל אותה</p>
+  </header>
+
+  <main class="cards-grid">
+    
+    <!-- מכונה 1 -->
+    <a href="soup.html" class="card">
+      <div>
+        <div class="card-tag">Audio Synth</div>
+        <h2>Soup Generator</h2>
+        <p>מחולל סאונד ניסויי עם אפקטים של דאמפ, דיליי ופילטרים.</p>
+      </div>
+      <div class="card-footer">
+        הפעל מכונה <span>&larr;</span>
+      </div>
+    </a>
+
+    <!-- מכונה 2 -->
+    <a href="dodecaphonic.html" class="card">
+      <div>
+        <div class="card-tag">12-Tone Engine</div>
+        <h2>Dodecaphonic Maker</h2>
+        <p>מנוע ליצירת מלודיות דודקפוניות ומטריצת מקצבים סריאלית.</p>
+      </div>
+      <div class="card-footer">
+        הפעל מכונה <span>&larr;</span>
+      </div>
+    </a>
+
+    <!-- מכונה 3 -->
+    <a href="file3.html" class="card">
+      <div>
+        <div class="card-tag">Interactive Toy</div>
+        <h2>המכונה השלישית</h2>
+        <p>תיאור קצר של המכונה או המשחק השלישי שלך.</p>
+      </div>
+      <div class="card-footer">
+        הפעל מכונה <span>&larr;</span>
+      </div>
+    </a>
+
+  </main>
+
+</body>
+</html>
