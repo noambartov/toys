@@ -8,7 +8,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/lamejs/1.2.1/lame.min.js"></script>
     <style>
         :root {
-            --bg-main: #121316;
+            --bg-main: #ffffff; /* רקע עמוד לבן קבוע */
             --panel-bg: #1c1e24;
             --panel-border: #2a2d36;
             --accent-green: #00e676;
@@ -20,6 +20,7 @@
             --knob-color: #2c2f38;
             --white-key: #e6e8ec;
             --black-key: #151619;
+            --case-bg: #f4f4f5; /* צבע מארז המכונה */
         }
 
         * { 
@@ -28,23 +29,27 @@
             -webkit-user-select: none;
             -webkit-touch-callout: none;
         }
-body {
-  margin: 0; padding: 20px;
-  background-color: #f4f4f5; /* שינוי לרקע בהיר */
-  color: var(--text-main);
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  display: flex; justify-content: center; align-items: center;
-  min-height: 100vh;
-  touch-action: manipulation;
-}
-      .rack-case {
-  background-color: var(--panel-bg);
-  border: 2px solid var(--panel-border);
-  border-radius: 16px; /* הגדלה קלה של עיגול הפינות */
-  width: 960px; padding: 24px;
-  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.4); /* הצללה רכה ובולטת יותר */
-  position: relative;
-}
+        body {
+            margin: 0; padding: 10px;
+            background-color: #ffffff !important; /* קבוע לבן */
+            color: var(--text-main);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            display: flex; justify-content: center; align-items: center;
+            min-height: 100vh;
+            touch-action: manipulation;
+        }
+        .rack-case {
+            background-color: var(--case-bg);
+            border: 2px solid var(--panel-border);
+            border-radius: 16px;
+            width: 100%;
+            max-width: 420px; /* התאמה מושלמת למקלדת ולטלפונים */
+            padding: 16px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+            position: relative;
+            margin: 0 auto;
+            transition: background-color 0.3s ease, border-color 0.3s ease;
+        }
         .screw {
             width: 12px; height: 12px; background: #3a3d48;
             border-radius: 50%; position: absolute;
@@ -54,24 +59,24 @@ body {
             content: ''; display: block; width: 100%; height: 2px;
             background: #121316; margin-top: 5px; transform: rotate(45deg);
         }
-        .screw.top-left { top: 10px; left: 10px; }
-        .screw.top-right { top: 10px; right: 10px; }
-        .screw.bottom-left { bottom: 10px; left: 10px; }
-        .screw.bottom-right { bottom: 10px; right: 10px; }
+        .screw.top-left { top: 8px; left: 8px; }
+        .screw.top-right { top: 8px; right: 8px; }
+        .screw.bottom-left { bottom: 8px; left: 8px; }
+        .screw.bottom-right { bottom: 8px; right: 8px; }
 
         header {
             display: flex; justify-content: space-between; align-items: center;
-            border-bottom: 1px solid var(--panel-border); padding-bottom: 12px; margin-bottom: 20px;
+            border-bottom: 1px solid var(--panel-border); padding-bottom: 10px; margin-bottom: 12px;
         }
         .header-title-box { flex-grow: 1; text-align: left; }
-        header h1 { margin: 0; font-size: 22px; letter-spacing: 2px; color: var(--text-main); }
-        header p { margin: 4px 0 0 0; font-size: 11px; color: var(--accent-gold); letter-spacing: 1.5px; font-weight: 600; }
+        header h1 { margin: 0; font-size: 16px; letter-spacing: 1px; color: var(--text-main); }
+        header p { margin: 2px 0 0 0; font-size: 9px; color: var(--accent-gold); letter-spacing: 1px; font-weight: 600; }
 
         .schoenberg-portrait {
-            width: 64px; height: 64px; border-radius: 50%;
+            width: 48px; height: 48px; border-radius: 50%;
             border: 2px solid var(--accent-gold);
             background: #000; overflow: hidden;
-            box-shadow: 0 0 10px rgba(255, 183, 0, 0.2);
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
             flex-shrink: 0;
         }
         .schoenberg-portrait img {
@@ -80,19 +85,27 @@ body {
         }
 
         .section-box {
-            background: rgba(0, 0, 0, 0.25);
+            background: var(--panel-bg);
             border: 1px solid var(--panel-border);
-            border-radius: 8px; padding: 16px; margin-bottom: 16px;
+            border-radius: 8px; padding: 12px; margin-bottom: 12px;
+            transition: background-color 0.3s ease, border-color 0.3s ease;
         }
 
-        .top-controls { display: flex; justify-content: space-between; align-items: center; gap: 4px; }
-        .control-item { display: flex; flex-direction: column; align-items: center; gap: 6px; }
-        .control-label { font-size: 10px; font-weight: 700; color: var(--text-sub); letter-spacing: 0.8px; text-align: center; }
+        /* סידור הבקרים ברשת מותאמת לנייד */
+        .top-controls { 
+            display: grid; 
+            grid-template-columns: repeat(4, 1fr); 
+            gap: 10px 4px; 
+            justify-items: center;
+            align-items: end;
+        }
+        .control-item { display: flex; flex-direction: column; align-items: center; gap: 4px; width: 100%; }
+        .control-label { font-size: 8.5px; font-weight: 700; color: var(--text-sub); letter-spacing: 0.5px; text-align: center; }
 
         .power-btn {
-            width: 44px; height: 26px; background: #222;
+            width: 40px; height: 24px; background: #222;
             border: 1px solid #444; border-radius: 4px;
-            color: #555; font-size: 10px; font-weight: bold; cursor: pointer;
+            color: #555; font-size: 9px; font-weight: bold; cursor: pointer;
         }
         .power-btn.on {
             background: rgba(0, 230, 118, 0.15); border-color: var(--accent-green);
@@ -101,13 +114,13 @@ body {
 
         .timbre-btn {
             background: #0d0e11; border: 1px solid var(--panel-border);
-            color: var(--accent-gold); font-weight: bold; font-size: 12px;
-            padding: 6px 10px; border-radius: 6px; cursor: pointer;
+            color: var(--accent-gold); font-weight: bold; font-size: 10px;
+            padding: 4px 6px; border-radius: 4px; cursor: pointer; width: 100%; text-align: center;
         }
 
         .knob-container { 
-            position: relative; width: 42px; height: 42px; 
-            touch-action: none; /* Prevents scroll on mobile drag */
+            position: relative; width: 34px; height: 34px; 
+            touch-action: none;
         }
         .knob {
             width: 100%; height: 100%;
@@ -116,25 +129,25 @@ body {
             touch-action: none;
         }
         .knob-indicator {
-            position: absolute; top: 4px; left: 50%; width: 3px; height: 10px;
+            position: absolute; top: 3px; left: 50%; width: 2px; height: 8px;
             background: var(--accent-blue); transform: translateX(-50%); border-radius: 2px;
         }
 
         .knob-val {
             background: #0d0e11; border: 1px solid var(--panel-border);
-            padding: 2px 4px; border-radius: 3px; font-size: 9px;
-            font-family: monospace; color: var(--text-main); text-align: center; white-space: nowrap;
+            padding: 2px 2px; border-radius: 3px; font-size: 8px;
+            font-family: monospace; color: var(--text-main); text-align: center; white-space: nowrap; width: 100%;
         }
 
         select.sound-select {
             background: #0d0e11; color: var(--accent-gold);
-            border: 1px solid var(--panel-border); padding: 5px 8px;
-            border-radius: 4px; font-weight: bold; font-size: 11px; cursor: pointer;
-            outline: none; max-width: 110px;
+            border: 1px solid var(--panel-border); padding: 4px 2px;
+            border-radius: 4px; font-weight: bold; font-size: 9px; cursor: pointer;
+            outline: none; width: 100%; text-align: center;
         }
 
         .rec-btn {
-            width: 22px; height: 22px; background: var(--accent-red);
+            width: 20px; height: 20px; background: var(--accent-red);
             border-radius: 50%; border: 2px solid #fff; cursor: pointer; transition: all 0.2s;
         }
         .rec-btn.recording { animation: pulse 1s infinite alternate; box-shadow: 0 0 12px var(--accent-red); }
@@ -142,79 +155,81 @@ body {
         @keyframes pulse { from { opacity: 1; } to { opacity: 0.3; } }
 
         .keyboard-title {
-            text-align: center; font-size: 12px; font-weight: 800;
-            color: var(--accent-gold); letter-spacing: 2px; margin-bottom: 8px;
+            text-align: center; font-size: 10px; font-weight: 800;
+            color: var(--accent-gold); letter-spacing: 1px; margin-bottom: 6px;
             text-transform: uppercase;
         }
 
         .keyboard-wrapper {
-            position: relative; height: 140px; display: flex;
+            position: relative; height: 125px; display: flex;
             flex-direction: column; align-items: center; justify-content: center;
-            background: #000; border-radius: 6px; padding: 10px 0; overflow: hidden;
+            background: #000; border-radius: 6px; padding: 8px 0; overflow: hidden;
         }
-        .piano { position: relative; display: flex; height: 100px; }
+        .piano { position: relative; display: flex; height: 90px; }
 
         .key-white {
-            width: 36px; height: 100px; background: var(--white-key);
+            width: 36px; height: 90px; background: var(--white-key);
             border: 1px solid #bbb; border-radius: 0 0 4px 4px;
             display: flex; flex-direction: column; justify-content: flex-end;
-            align-items: center; padding-bottom: 6px; font-size: 9px;
+            align-items: center; padding-bottom: 4px; font-size: 8px;
             font-weight: bold; color: #333; cursor: pointer; z-index: 1;
+            transition: background-color 0.2s ease;
         }
         .key-white.active { background: #ccc; transform: translateY(2px); }
 
         .key-black {
-            width: 22px; height: 62px; background: var(--black-key);
+            width: 22px; height: 54px; background: var(--black-key);
             border: 1px solid #000; border-radius: 0 0 3px 3px;
             position: absolute; z-index: 2; display: flex;
             flex-direction: column; justify-content: flex-end;
-            align-items: center; padding-bottom: 4px; font-size: 8px;
+            align-items: center; padding-bottom: 3px; font-size: 7px;
             font-weight: bold; color: #fff; cursor: pointer;
+            transition: background-color 0.2s ease;
         }
         .key-black.active { background: #333; transform: translateY(2px); }
-        .key-sub { font-size: 8px; opacity: 0.6; }
+        .key-sub { font-size: 7px; opacity: 0.6; }
 
-        .prime-row-container { display: flex; justify-content: space-between; align-items: center; }
-        .prime-notes { display: flex; gap: 6px; flex-wrap: wrap; min-height: 32px; align-items: center; }
+        .prime-row-container { display: flex; flex-direction: column; gap: 8px; align-items: stretch; }
+        .prime-notes { display: flex; gap: 4px; flex-wrap: wrap; min-height: 28px; align-items: center; justify-content: center; }
         .note-badge {
             background: var(--accent-gold); color: #000; font-weight: bold;
-            font-size: 11px; padding: 6px 10px; border-radius: 4px;
+            font-size: 10px; padding: 4px 6px; border-radius: 4px;
             transition: all 0.1s;
         }
-        .note-badge.playing-now { outline: 2px solid var(--accent-blue); transform: scale(1.15); background: #fff; }
+        .note-badge.playing-now { outline: 2px solid var(--accent-blue); transform: scale(1.1); background: #fff; }
 
-        .btn { padding: 8px 16px; border-radius: 4px; font-weight: bold; font-size: 12px; cursor: pointer; border: none; }
-        .btn-clear { background: #2c2f38; color: var(--text-main); border: 1px solid var(--panel-border); }
+        .btn { padding: 6px 12px; border-radius: 4px; font-weight: bold; font-size: 11px; cursor: pointer; border: none; }
+        .btn-clear { background: #2c2f38; color: var(--text-main); border: 1px solid var(--panel-border); width: 100%; }
 
-        .bottom-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-        .toggle-box { display: flex; flex-direction: column; gap: 10px; }
+        .bottom-grid { display: flex; flex-direction: column; gap: 12px; }
+        .toggle-box { display: flex; flex-direction: column; gap: 8px; }
         .toggle-header { display: flex; justify-content: space-between; align-items: center; }
         
         .toggle-switch {
-            width: 40px; height: 20px; background: #222; border-radius: 10px;
+            width: 36px; height: 18px; background: #222; border-radius: 10px;
             position: relative; cursor: pointer; border: 1px solid var(--panel-border);
         }
         .toggle-switch::after {
-            content: ''; position: absolute; width: 16px; height: 16px;
+            content: ''; position: absolute; width: 14px; height: 14px;
             border-radius: 50%; background: #555; top: 1px; left: 1px; transition: all 0.2s;
         }
         .toggle-switch.on { background: rgba(0, 230, 118, 0.2); border-color: var(--accent-green); }
-        .toggle-switch.on::after { left: 21px; background: var(--accent-green); box-shadow: 0 0 8px var(--accent-green); }
+        .toggle-switch.on::after { left: 19px; background: var(--accent-green); box-shadow: 0 0 8px var(--accent-green); }
 
-        .info-text { font-size: 11px; color: var(--text-sub); line-height: 1.4; font-family: monospace; }
-        .rhythm-values-box { display: flex; gap: 6px; margin-top: 4px; flex-wrap: wrap; }
-        .rhythm-badge { background: #151619; border: 1px solid var(--panel-border); color: var(--accent-green); font-size: 10px; padding: 2px 6px; border-radius: 3px; }
+        .info-text { font-size: 10px; color: var(--text-sub); line-height: 1.3; font-family: monospace; }
+        .rhythm-values-box { display: flex; gap: 4px; margin-top: 4px; flex-wrap: wrap; }
+        .rhythm-badge { background: #151619; border: 1px solid var(--panel-border); color: var(--accent-green); font-size: 9px; padding: 2px 4px; border-radius: 3px; }
 
-        .play-bar { display: flex; justify-content: center; align-items: center; gap: 16px; padding-top: 10px; }
-        .status-led { width: 10px; height: 10px; border-radius: 50%; background: #333; }
+        .play-bar { display: flex; justify-content: center; align-items: center; gap: 8px; padding-top: 6px; }
+        .status-led { width: 8px; height: 8px; border-radius: 50%; background: #333; flex-shrink: 0; }
         .status-led.active { background: var(--accent-blue); box-shadow: 0 0 10px var(--accent-blue); }
 
         .btn-play {
-            width: 200px; height: 42px;
+            flex: 1; height: 38px;
             background: linear-gradient(180deg, #00a2ff 0%, #0066cc 100%);
             border: 1px solid var(--accent-blue); border-radius: 6px;
-            color: #fff; font-weight: bold; font-size: 14px; cursor: pointer;
-            letter-spacing: 1px;
+            color: #fff; font-weight: bold; font-size: 13px; cursor: pointer;
+            letter-spacing: 0.5px;
         }
         .btn-play.playing {
             background: linear-gradient(180deg, #ff3b30 0%, #cc1100 100%);
@@ -222,14 +237,14 @@ body {
         }
 
         .btn-transpose {
-            height: 42px; padding: 0 18px;
+            flex: 1; height: 38px; padding: 0 8px;
             background: linear-gradient(180deg, #00e676 0%, #00a854 100%);
             border: 1px solid var(--accent-green); border-radius: 6px;
-            color: #000; font-weight: bold; font-size: 13px; cursor: pointer;
+            color: #000; font-weight: bold; font-size: 11px; cursor: pointer;
             letter-spacing: 0.5px;
         }
 
-        .matrix-info { text-align: center; font-size: 12px; color: var(--accent-gold); margin-top: 10px; font-weight: bold; font-family: monospace; }
+        .matrix-info { text-align: center; font-size: 10px; color: var(--accent-gold); margin-top: 8px; font-weight: bold; font-family: monospace; line-height: 1.2; }
     </style>
 </head>
 <body>
@@ -242,11 +257,11 @@ body {
 
         <header>
             <div class="header-title-box">
-                <h1>DODECAPHONIC MELODY MAKER</h1>
-                <p>12-TONE SERIALISM & RHYTHM MATRIX ENGINE</p>
+                <h1>DODECAPHONIC</h1>
+                <p>12-TONE SERIALISM ENGINE</p>
             </div>
             <!-- Arnold Schoenberg Caricature Portrait -->
-            <div class="schoenberg-portrait" title="Arnold Schoenberg">
+            <div class="schoenberg-portrait" id="portraitBox" title="Arnold Schoenberg">
                 <svg viewBox="0 0 100 100" width="100%" height="100%">
                     <circle cx="50" cy="50" r="50" fill="#2a2215"/>
                     <path d="M 30,55 C 28,30 40,18 52,18 C 65,18 74,30 72,55 C 70,75 62,85 50,85 C 38,85 32,75 30,55 Z" fill="#e0c2a6"/>
@@ -354,23 +369,23 @@ body {
 
         <!-- Prime Row Display -->
         <div class="section-box">
-            <div class="control-label" style="margin-bottom: 8px; text-align: left;">ACTIVE ROW (12 TONES):</div>
+            <div class="control-label" style="margin-bottom: 6px; text-align: left;">ACTIVE ROW (12 TONES):</div>
             <div class="prime-row-container">
                 <div class="prime-notes" id="primeRowNotes"></div>
                 <button class="btn btn-clear" id="clearBtn">CLEAR ROW</button>
             </div>
         </div>
 
-        <!-- Bottom Grid Toggles (Default OFF) -->
+        <!-- Bottom Grid Toggles -->
         <div class="bottom-grid">
             <div class="section-box toggle-box">
                 <div class="toggle-header">
                     <span class="control-label">RHYTHM ROW MATRIX</span>
                     <div class="toggle-switch" id="tempoToggle"></div>
                 </div>
-                <div style="display:flex; gap:10px; align-items:center;">
-                    <button class="btn btn-clear" id="tapRhythmBtn">TAP RHYTHM (0/8)</button>
-                    <button class="btn btn-clear" style="font-size:10px; padding:6px 10px;" id="resetRhythmBtn">RESET TAP</button>
+                <div style="display:flex; gap:6px; align-items:center;">
+                    <button class="btn btn-clear" style="font-size:10px; padding:4px 8px;" id="tapRhythmBtn">TAP RHYTHM (0/8)</button>
+                    <button class="btn btn-clear" style="font-size:9px; padding:4px 6px;" id="resetRhythmBtn">RESET TAP</button>
                 </div>
                 <div class="info-text" id="rhythmInfo">Tap button generate rhythm values.</div>
                 <div class="rhythm-values-box" id="rhythmDisplay"></div>
@@ -384,7 +399,7 @@ body {
                 <div class="info-text">
                     Plays 3-4 note chords from the matrix.
                 </div>
-                <div class="toggle-header" style="margin-top: 10px;">
+                <div class="toggle-header" style="margin-top: 6px;">
                     <span class="control-label">ADD COUNTER MELODY</span>
                     <div class="toggle-switch" id="counterMelodyToggle"></div>
                 </div>
@@ -404,6 +419,80 @@ body {
     </div>
 
     <script>
+        // 50 Color Palettes for Machine Timbre Switcher (Background stays strictly White)
+        const colorThemes = [
+            { caseBg: "#f4f4f5", panelBg: "#1c1e24", border: "#2a2d36", gold: "#ffb700", blue: "#0091ff", green: "#00e676", text: "#e1e4ed", subText: "#8a8e9b", knob: "#2c2f38", whiteKey: "#e6e8ec", blackKey: "#151619" },
+            { caseBg: "#0f172a", panelBg: "#1e293b", border: "#334155", gold: "#f59e0b", blue: "#38bdf8", green: "#4ade80", text: "#f8fafc", subText: "#94a3b8", knob: "#0f172a", whiteKey: "#f1f5f9", blackKey: "#020617" },
+            { caseBg: "#18181b", panelBg: "#27272a", border: "#3f3f46", gold: "#eab308", blue: "#06b6d4", green: "#10b981", text: "#fafafa", subText: "#a1a1aa", knob: "#18181b", whiteKey: "#f4f4f5", blackKey: "#09090b" },
+            { caseBg: "#2d0b00", panelBg: "#421505", border: "#6e250c", gold: "#fb923c", blue: "#f43f5e", green: "#a3e635", text: "#fff7ed", subText: "#fdba74", knob: "#1c0700", whiteKey: "#ffedd5", blackKey: "#1a0400" },
+            { caseBg: "#022c22", panelBg: "#064e3b", border: "#047857", gold: "#facc15", blue: "#2dd4bf", green: "#34d399", text: "#ecfdf5", subText: "#6ee7b7", knob: "#022c22", whiteKey: "#d1fae5", blackKey: "#021a14" },
+            { caseBg: "#1e1b4b", panelBg: "#312e81", border: "#4338ca", gold: "#fbbf24", blue: "#818cf8", green: "#34d399", text: "#e0e7ff", subText: "#a5b4fc", knob: "#1e1b4b", whiteKey: "#eea2a2", blackKey: "#0f0e26" },
+            { caseBg: "#31122f", panelBg: "#4a1d47", border: "#702a6c", gold: "#f472b6", blue: "#c084fc", green: "#22c55e", text: "#fdf2f8", subText: "#f472b6", knob: "#21091f", whiteKey: "#fbcfe8", blackKey: "#180517" },
+            { caseBg: "#1c1917", panelBg: "#292524", border: "#44403c", gold: "#d97706", blue: "#22d3ee", green: "#84cc16", text: "#f5f5f4", subText: "#a8a29e", knob: "#1c1917", whiteKey: "#e7e5e4", blackKey: "#0c0a09" },
+            { caseBg: "#042f2e", panelBg: "#115e59", border: "#0d9488", gold: "#fcd34d", blue: "#38bdf8", green: "#5eead4", text: "#f0fdfa", subText: "#99f6e4", knob: "#042f2e", whiteKey: "#ccfbf1", blackKey: "#021a19" },
+            { caseBg: "#172554", panelBg: "#1e3a8a", border: "#1d4ed8", gold: "#f59e0b", blue: "#60a5fa", green: "#4ade80", text: "#eff6ff", subText: "#93c5fd", knob: "#172554", whiteKey: "#dbeafe", blackKey: "#09132e" },
+            { caseBg: "#3b0764", panelBg: "#581c87", border: "#7e22ce", gold: "#fb7185", blue: "#a855f7", green: "#34d399", text: "#faf5ff", subText: "#d8b4fe", knob: "#280345", whiteKey: "#f3e8ff", blackKey: "#19012e" },
+            { caseBg: "#4c0519", panelBg: "#881337", border: "#be123c", gold: "#fbbf24", blue: "#f43f5e", green: "#4ade80", text: "#fff1f2", subText: "#fda4af", knob: "#310210", whiteKey: "#ffe4e6", blackKey: "#20010a" },
+            { caseBg: "#1a2e05", panelBg: "#365314", border: "#4d7c0f", gold: "#facc15", blue: "#38bdf8", green: "#a3e635", text: "#f7fee7", subText: "#bef264", knob: "#122003", whiteKey: "#ecfccb", blackKey: "#0a1202" },
+            { caseBg: "#451a03", panelBg: "#78350f", border: "#b45309", gold: "#fbbf24", blue: "#fb923c", green: "#84cc16", text: "#fffbe8", subText: "#fde047", knob: "#2b1002", whiteKey: "#fef3c7", blackKey: "#190901" },
+            { caseBg: "#030712", panelBg: "#111827", border: "#1f2937", gold: "#eab308", blue: "#3b82f6", green: "#22c55e", text: "#f9fafb", subText: "#9ca3af", knob: "#030712", whiteKey: "#f3f4f6", blackKey: "#000000" },
+            { caseBg: "#e2e8f0", panelBg: "#cbd5e1", border: "#94a3b8", gold: "#d97706", blue: "#0284c7", green: "#16a34a", text: "#0f172a", subText: "#475569", knob: "#64748b", whiteKey: "#ffffff", blackKey: "#334155" },
+            { caseBg: "#fecaca", panelBg: "#fca5a5", border: "#f87171", gold: "#b45309", blue: "#2563eb", green: "#15803d", text: "#7f1d1d", subText: "#991b1b", knob: "#ef4444", whiteKey: "#ffffff", blackKey: "#450a0a" },
+            { caseBg: "#bbf7d0", panelBg: "#86efac", border: "#4ade80", gold: "#ca8a04", blue: "#0284c7", green: "#16a34a", text: "#14532d", subText: "#166534", knob: "#22c55e", whiteKey: "#ffffff", blackKey: "#052e16" },
+            { caseBg: "#bae6fd", panelBg: "#7dd3fc", border: "#38bdf8", gold: "#d97706", blue: "#0369a1", green: "#15803d", text: "#0c4a6e", subText: "#075985", knob: "#0284c7", whiteKey: "#ffffff", blackKey: "#082f49" },
+            { caseBg: "#e9d5ff", panelBg: "#c084fc", border: "#a855f7", gold: "#c026d3", blue: "#7e22ce", green: "#16a34a", text: "#581c87", subText: "#6b21a8", knob: "#9333ea", whiteKey: "#ffffff", blackKey: "#3b0764" },
+            { caseBg: "#111827", panelBg: "#1f2937", border: "#374151", gold: "#f59e0b", blue: "#60a5fa", green: "#10b981", text: "#f9fafb", subText: "#9ca3af", knob: "#111827", whiteKey: "#f3f4f6", blackKey: "#030712" },
+            { caseBg: "#000000", panelBg: "#121212", border: "#272727", gold: "#ffb700", blue: "#00e5ff", green: "#39ff14", text: "#ffffff", subText: "#888888", knob: "#1f1f1f", whiteKey: "#e0e0e0", blackKey: "#050505" },
+            { caseBg: "#221008", panelBg: "#3a1d10", border: "#5c301c", gold: "#ffa048", blue: "#00d2ff", green: "#50e3c2", text: "#ffeae0", subText: "#d1a290", knob: "#210f07", whiteKey: "#f7e8e1", blackKey: "#140703" },
+            { caseBg: "#0a192f", panelBg: "#172a45", border: "#303c55", gold: "#ffb700", blue: "#64ffda", green: "#00e676", text: "#e6f1ff", subText: "#8892b0", knob: "#0a192f", whiteKey: "#e6f1ff", blackKey: "#020c1b" },
+            { caseBg: "#2b2d42", panelBg: "#8d99ae", border: "#edf2f4", gold: "#d90429", blue: "#2b2d42", green: "#00b4d8", text: "#edf2f4", subText: "#2b2d42", knob: "#2b2d42", whiteKey: "#edf2f4", blackKey: "#11121a" },
+            { caseBg: "#22223b", panelBg: "#4a4e69", border: "#9a8c98", gold: "#f2e9e1", blue: "#c9ada7", green: "#8eecf5", text: "#f2e9e1", subText: "#c9ada7", knob: "#22223b", whiteKey: "#f2e9e1", blackKey: "#131321" },
+            { caseBg: "#003049", panelBg: "#d62828", border: "#f77f00", gold: "#fcbf49", blue: "#003049", green: "#80ed99", text: "#eae2b7", subText: "#fcbf49", knob: "#003049", whiteKey: "#eae2b7", blackKey: "#001523" },
+            { caseBg: "#264653", panelBg: "#2a9d8f", border: "#e9c46a", gold: "#f4a261", blue: "#e76f51", green: "#2a9d8f", text: "#ffffff", subText: "#e9c46a", knob: "#1d3557", whiteKey: "#f1faee", blackKey: "#1d3557" },
+            { caseBg: "#6b705c", panelBg: "#a5a58d", border: "#b7b7a4", gold: "#ffe8d6", blue: "#ddbea9", green: "#cb997e", text: "#ffe8d6", subText: "#6b705c", knob: "#3f4237", whiteKey: "#ffe8d6", blackKey: "#282a22" },
+            { caseBg: "#1a0004", panelBg: "#320008", border: "#640011", gold: "#ffb700", blue: "#ff4d6d", green: "#00f5d4", text: "#fff0f3", subText: "#ff758f", knob: "#1a0004", whiteKey: "#fff0f3", blackKey: "#0f0002" },
+            { caseBg: "#0f051d", panelBg: "#291147", border: "#52228c", gold: "#f72585", blue: "#4cc9f0", green: "#4361ee", text: "#f8f9fa", subText: "#b5179e", knob: "#0f051d", whiteKey: "#f8f9fa", blackKey: "#05010c" },
+            { caseBg: "#081c15", panelBg: "#1b4332", border: "#2d6a4f", gold: "#d8f3dc", blue: "#52b788", green: "#74c69d", text: "#d8f3dc", subText: "#b7e4c7", knob: "#081c15", whiteKey: "#d8f3dc", blackKey: "#020806" },
+            { caseBg: "#2b1e1a", panelBg: "#4a352f", border: "#6e5047", gold: "#e8ac65", blue: "#d4a373", green: "#a3b18a", text: "#fefae0", subText: "#faedcd", knob: "#1f1512", whiteKey: "#fefae0", blackKey: "#120c0a" },
+            { caseBg: "#1d1e2c", panelBg: "#2b2d42", border: "#414361", gold: "#f7fff7", blue: "#4ea8de", green: "#70e000", text: "#f7fff7", subText: "#979dac", knob: "#12131c", whiteKey: "#f7fff7", blackKey: "#0a0b10" },
+            { caseBg: "#3d0c02", panelBg: "#5c1d11", border: "#852e1e", gold: "#e09f3e", blue: "#9e2a2b", green: "#335c67", text: "#fff3b0", subText: "#e09f3e", knob: "#240701", whiteKey: "#fff3b0", blackKey: "#120300" },
+            { caseBg: "#132a13", panelBg: "#31572c", border: "#4f772d", gold: "#ecf39e", blue: "#90a955", green: "#31572c", text: "#ecf39e", subText: "#90a955", knob: "#0b190b", whiteKey: "#ecf39e", blackKey: "#050b05" },
+            { caseBg: "#2c0b1e", panelBg: "#4a1232", border: "#701f4c", gold: "#f1a7a6", blue: "#e06d53", green: "#e88873", text: "#f7d6c8", subText: "#f1a7a6", knob: "#1a0612", whiteKey: "#f7d6c8", blackKey: "#0e030a" },
+            { caseBg: "#03045e", panelBg: "#0077b6", border: "#0096c7", gold: "#caf0f8", blue: "#90e0ef", green: "#00b4d8", text: "#caf0f8", subText: "#90e0ef", knob: "#02023a", whiteKey: "#caf0f8", blackKey: "#010121" },
+            { caseBg: "#38040e", panelBg: "#250902", border: "#641220", gold: "#e01a4f", blue: "#f15bb5", green: "#00f5d4", text: "#fff0f3", subText: "#a71e34", knob: "#190105", whiteKey: "#fff0f3", blackKey: "#0a0002" },
+            { caseBg: "#10002b", panelBg: "#240046", border: "#3c096c", gold: "#ff9e00", blue: "#7b2cbf", green: "#9d4edd", text: "#e0aaff", subText: "#c77dff", knob: "#10002b", whiteKey: "#e0aaff", blackKey: "#05000e" },
+            { caseBg: "#1f2421", panelBg: "#212529", border: "#343a40", gold: "#f8f9fa", blue: "#495057", green: "#6c757d", text: "#f8f9fa", subText: "#adb5bd", knob: "#111412", whiteKey: "#f8f9fa", blackKey: "#000000" },
+            { caseBg: "#011627", panelBg: "#022b3a", border: "#1f7a8c", gold: "#bfdbf7", blue: "#e1e5f2", green: "#1f7a8c", text: "#ffffff", subText: "#bfdbf7", knob: "#000d18", whiteKey: "#ffffff", blackKey: "#00050a" },
+            { caseBg: "#220901", panelBg: "#621708", border: "#941b0c", gold: "#f6aa1c", blue: "#bc3908", green: "#f6aa1c", text: "#ffffff", subText: "#f6aa1c", knob: "#110400", whiteKey: "#ffffff", blackKey: "#080100" },
+            { caseBg: "#1b263b", panelBg: "#415a77", border: "#778da9", gold: "#e0e1dd", blue: "#778da9", green: "#e0e1dd", text: "#e0e1dd", subText: "#a3b18a", knob: "#0d131d", whiteKey: "#e0e1dd", blackKey: "#05080c" },
+            { caseBg: "#2d00f7", panelBg: "#6b00f7", border: "#a100f7", gold: "#f700a1", blue: "#ff0054", green: "#00f5d4", text: "#ffffff", subText: "#f700a1", knob: "#1a0099", whiteKey: "#ffffff", blackKey: "#0d004d" },
+            { caseBg: "#120826", panelBg: "#221240", border: "#381f66", gold: "#ffd000", blue: "#ff007f", green: "#00f0ff", text: "#f0e6ff", subText: "#b388ff", knob: "#0c051a", whiteKey: "#f0e6ff", blackKey: "#05020a" },
+            { caseBg: "#1a1c23", panelBg: "#252836", border: "#383c51", gold: "#ffb86c", blue: "#8be9fd", green: "#50fa7b", text: "#f8f8f2", subText: "#6272a4", knob: "#121319", whiteKey: "#f8f8f2", blackKey: "#0b0c10" },
+            { caseBg: "#282a36", panelBg: "#44475a", border: "#6272a4", gold: "#f1fa8c", blue: "#8be9fd", green: "#50fa7b", text: "#f8f8f2", subText: "#bd93f9", knob: "#21222c", whiteKey: "#f8f8f2", blackKey: "#191a21" },
+            { caseBg: "#1e1e1e", panelBg: "#252526", border: "#3c3c3c", gold: "#ce9178", blue: "#569cd6", green: "#b5cea8", text: "#d4d4d4", subText: "#808080", knob: "#181818", whiteKey: "#d4d4d4", blackKey: "#0e0e0e" },
+            { caseBg: "#002b36", panelBg: "#073642", border: "#586e75", gold: "#b58900", blue: "#268bd2", green: "#859900", text: "#93a1a1", subText: "#657b83", knob: "#00212b", whiteKey: "#eee8d5", blackKey: "#00161d" }
+        ];
+
+        function applyTheme(index) {
+            const theme = colorThemes[index % colorThemes.length];
+            const root = document.documentElement;
+
+            // Update machine elements colors ONLY (Body stays #ffffff)
+            root.style.setProperty('--case-bg', theme.caseBg);
+            root.style.setProperty('--panel-bg', theme.panelBg);
+            root.style.setProperty('--panel-border', theme.border);
+            root.style.setProperty('--accent-gold', theme.gold);
+            root.style.setProperty('--accent-blue', theme.blue);
+            root.style.setProperty('--accent-green', theme.green);
+            root.style.setProperty('--text-main', theme.text);
+            root.style.setProperty('--text-sub', theme.subText);
+            root.style.setProperty('--knob-color', theme.knob);
+            root.style.setProperty('--white-key', theme.whiteKey);
+            root.style.setProperty('--black-key', theme.blackKey);
+
+            document.getElementById('themeVal').innerText = (index % colorThemes.length) + 1;
+        }
+
         // Keyboard Setup
         const WHITE_KEYS = [
             { note: "A3", key: "A" }, { note: "B3", key: "S" }, { note: "C4", key: "D" },
@@ -693,401 +782,319 @@ body {
 
             activeRow = transformedNotes.map(idx => CHROMATIC_SCALE[(idx + manualTransposeOffset) % CHROMATIC_SCALE.length]);
 
-            if (mode === 0) {
-                activeRhythmRow = [...baseRhythmRow];
-            } else if (mode === 1) {
-                activeRhythmRow = [...baseRhythmRow].reverse();
-            } else if (mode === 2) {
-                const avg = baseRhythmRow.reduce((a,b)=>a+b,0)/baseRhythmRow.length;
-                activeRhythmRow = baseRhythmRow.map(v => Math.max(0.2, (2 * avg) - v));
-            } else {
-                const avg = baseRhythmRow.reduce((a,b)=>a+b,0)/baseRhythmRow.length;
-                activeRhythmRow = [...baseRhythmRow].reverse().map(v => Math.max(0.2, (2 * avg) - v));
-            }
-
-            updateRhythmDisplay();
-            document.getElementById('matrixStatus').innerText = `Matrix Active: ${modeName} | Transposition Shift: +${manualTransposeOffset} | Rhythm Mode: ${mode}`;
-        }
-
-        // Strict Counterpoint Voice Generator
-        function calculateStrictCounterpointNote(currMainNote) {
-            const currMainIdx = CHROMATIC_SCALE.indexOf(currMainNote);
-
-            if (prevMainIdx === null || prevCounterIdx === null) {
-                const validConsonantIntervals = [-9, -8, -4, -3, 3, 4, 8, 9];
-                const choice = validConsonantIntervals[Math.floor(Math.random() * validConsonantIntervals.length)];
-                let counterIdx = (currMainIdx + choice + CHROMATIC_SCALE.length) % CHROMATIC_SCALE.length;
-                
-                prevMainIdx = currMainIdx;
-                prevCounterIdx = counterIdx;
-                return CHROMATIC_SCALE[counterIdx];
-            }
-
-            const mainDirection = currMainIdx - prevMainIdx;
-            let validCandidates = [];
-
-            for (let cIdx = 0; cIdx < CHROMATIC_SCALE.length; cIdx++) {
-                const interval = Math.abs(currMainIdx - cIdx);
-                
-                if (interval === 0 || interval === 7 || interval === 12) {
-                    continue; 
-                }
-
-                const counterDirection = cIdx - prevCounterIdx;
-
-                const isContrary = (mainDirection > 0 && counterDirection < 0) || (mainDirection < 0 && counterDirection > 0);
-                const isOblique = (mainDirection === 0 && counterDirection !== 0) || (mainDirection !== 0 && counterDirection === 0);
-                const isParallelAllowed = (mainDirection > 0 && counterDirection > 0) || (mainDirection < 0 && counterDirection < 0);
-
-                if (isContrary) {
-                    validCandidates.push({ idx: cIdx, weight: 3 });
-                } else if (isOblique) {
-                    validCandidates.push({ idx: cIdx, weight: 2 });
-                } else if (isParallelAllowed && (interval === 3 || interval === 4 || interval === 8 || interval === 9)) {
-                    validCandidates.push({ idx: cIdx, weight: 1 });
-                }
-            }
-
-            if (validCandidates.length === 0) {
-                let fallbackIdx = (currMainIdx + 3) % CHROMATIC_SCALE.length;
-                prevMainIdx = currMainIdx;
-                prevCounterIdx = fallbackIdx;
-                return CHROMATIC_SCALE[fallbackIdx];
-            }
-
-            let pool = [];
-            validCandidates.forEach(cand => {
-                for (let w = 0; w < cand.weight; w++) pool.push(cand.idx);
-            });
-
-            const chosenIdx = pool[Math.floor(Math.random() * pool.length)];
-            prevMainIdx = currMainIdx;
-            prevCounterIdx = chosenIdx;
-
-            return CHROMATIC_SCALE[chosenIdx];
-        }
-
-        document.getElementById('transposeBtn').addEventListener('click', () => {
-            manualTransposeOffset = (manualTransposeOffset + 1) % 12;
-            if (activeRow.length > 0) {
-                activeRow = activeRow.map(note => {
-                    const idx = CHROMATIC_SCALE.indexOf(note);
-                    return CHROMATIC_SCALE[(idx + 1) % CHROMATIC_SCALE.length];
-                });
-                renderPrimeRow();
-            }
-            document.getElementById('matrixStatus').innerText = `Matrix Transposed to Shift: +${manualTransposeOffset}`;
-        });
-
-        // Knobs Setup with Mobile Touch & Scroll Lock Fix
-        function setupKnob(knobId, valId, updateFn) {
-            const knob = document.getElementById(knobId);
-            const valDisplay = document.getElementById(valId);
-            let isDragging = false;
-            let startY, startVal;
-
-            const updateKnobUI = (val) => {
-                knob.setAttribute('data-val', val);
-                const angle = (val / 100) * 270 - 135;
-                knob.style.transform = `rotate(${angle}deg)`;
-            };
-
-            const startDrag = (clientY) => {
-                isDragging = true;
-                startY = clientY;
-                startVal = parseInt(knob.getAttribute('data-val'));
-            };
-
-            const moveDrag = (clientY) => {
-                if (!isDragging) return;
-                const delta = startY - clientY;
-                let newVal = Math.max(0, Math.min(100, startVal + delta));
-                updateKnobUI(newVal);
-                updateFn(newVal, valDisplay);
-            };
-
-            const endDrag = () => { isDragging = false; };
-
-            // Mouse Events
-            knob.addEventListener('mousedown', (e) => startDrag(e.clientY));
-            window.addEventListener('mousemove', (e) => moveDrag(e.clientY));
-            window.addEventListener('mouseup', endDrag);
-
-            // Touch Events (iOS / iPhone Support)
-            knob.addEventListener('touchstart', (e) => {
-                if (e.touches.length > 0) startDrag(e.touches[0].clientY);
-            }, { passive: true });
-
-            window.addEventListener('touchmove', (e) => {
-                if (isDragging && e.touches.length > 0) {
-                    e.preventDefault(); // Stop page scrolling on mobile!
-                    moveDrag(e.touches[0].clientY);
-                }
-            }, { passive: false });
-
-            window.addEventListener('touchend', endDrag);
-            window.addEventListener('touchcancel', endDrag);
-
-            updateKnobUI(parseInt(knob.getAttribute('data-val')));
-        }
-
-        setupKnob('bpmKnob', 'bpmVal', (val, display) => {
-            bpmVal = Math.round(40 + (val / 100) * 200);
-            display.innerText = `${bpmVal} BPM`;
-        });
-        
-        setupKnob('octaveKnob', 'octaveVal', (val, display) => {
-            if (val < 25) {
-                octaveRangeSpan = 0; display.innerText = '1 Octave';
-            } else if (val < 50) {
-                octaveRangeSpan = 1; display.innerText = '3 Octaves';
-            } else if (val < 75) {
-                octaveRangeSpan = 2; display.innerText = '5 Octaves';
-            } else {
-                octaveRangeSpan = 3; display.innerText = '7 Octaves';
-            }
-        });
-
-        setupKnob('envKnob', 'envVal', (val, display) => {
-            envelopeVal = val / 100;
-            display.innerText = val < 25 ? 'Staccato' : val < 60 ? 'Med Decay' : 'Legato';
-        });
-        setupKnob('volKnob', 'volVal', (val, display) => { volumeVal = val / 100; display.innerText = `${val}%`; });
-        setupKnob('dynKnob', 'dynVal', (val, display) => { dynamicsVal = val / 100; display.innerText = val < 33 ? 'pp' : val < 66 ? 'mf' : 'ff'; });
-        setupKnob('revKnob', 'revVal', (val, display) => { 
-            reverbVal = val / 100; 
-            display.innerText = `${val}%`;
-            if (reverbGainNode) reverbGainNode.gain.value = reverbVal * 2.5;
-        });
-
-        document.getElementById('powerBtn').addEventListener('click', (e) => {
-            isPowerOn = !isPowerOn;
-            e.target.classList.toggle('on', isPowerOn);
-            e.target.innerText = isPowerOn ? 'ON' : 'OFF';
-        });
-
-        // MP3 Recording Engine Setup
-        document.getElementById('recBtn').addEventListener('click', (e) => {
-            initAudioFX();
-            if (!isRecording) {
-                isRecording = true;
-                e.target.classList.add('recording');
-                audioChunks = [];
-
-                mediaRecorder = new MediaRecorder(recordDestination.stream);
-                mediaRecorder.ondataavailable = (event) => {
-                    if (event.data.size > 0) audioChunks.push(event.data);
-                };
-
-                mediaRecorder.onstop = async () => {
-                    const blob = new Blob(audioChunks, { type: 'audio/webm' });
-                    const arrayBuffer = await blob.arrayBuffer();
-                    const audioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
-                    
-                    const mp3Blob = convertAudioBufferToMp3(audioBuffer);
-                    const url = URL.createObjectURL(mp3Blob);
-                    
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = 'dodecaphonic-composition.mp3';
-                    a.click();
-                    URL.revokeObjectURL(url);
-                };
-
-                mediaRecorder.start();
-            } else {
-                isRecording = false;
-                e.target.classList.remove('recording');
-                if (mediaRecorder) mediaRecorder.stop();
-            }
-        });
-
-        function convertAudioBufferToMp3(audioBuffer) {
-            const channels = audioBuffer.numberOfChannels;
-            const sampleRate = audioBuffer.sampleRate;
-            const mp3encoder = new lamejs.Mp3Encoder(channels, sampleRate, 128);
-            const mp3Data = [];
-
-            const left = audioBuffer.getChannelData(0);
-            const right = channels > 1 ? audioBuffer.getChannelData(1) : left;
-
-            const sampleBlockSize = 1152;
-            const leftInt16 = new Int16Array(left.length);
-            const rightInt16 = new Int16Array(right.length);
-
-            for (let i = 0; i < left.length; i++) {
-                leftInt16[i] = Math.max(-32768, Math.min(32767, left[i] * 32767));
-                rightInt16[i] = Math.max(-32768, Math.min(32767, right[i] * 32767));
-            }
-
-            for (let i = 0; i < leftInt16.length; i += sampleBlockSize) {
-                const leftChunk = leftInt16.subarray(i, i + sampleBlockSize);
-                const rightChunk = rightInt16.subarray(i, i + sampleBlockSize);
-                let mp3buf;
-                if (channels === 2) {
-                    mp3buf = mp3encoder.encodeBuffer(leftChunk, rightChunk);
-                } else {
-                    mp3buf = mp3encoder.encodeBuffer(leftChunk);
-                }
-                if (mp3buf.length > 0) mp3Data.push(mp3buf);
-            }
-
-            const mp3buf = mp3encoder.flush();
-            if (mp3buf.length > 0) mp3Data.push(mp3buf);
-
-            return new Blob(mp3Data, { type: 'audio/mp3' });
-        }
-
-        function applyTheme(index) {
-            const hue = (index * 137.5) % 360;
-            const hueAccent = (hue + 140) % 360;
-
-            document.documentElement.style.setProperty('--bg-main', `hsl(${hue}, 20%, 8%)`);
-            document.documentElement.style.setProperty('--panel-bg', `hsl(${hue}, 25%, 15%)`);
-            document.documentElement.style.setProperty('--panel-border', `hsl(${hue}, 20%, 25%)`);
-            document.documentElement.style.setProperty('--accent-gold', `hsl(${hueAccent}, 90%, 55%)`);
-            document.documentElement.style.setProperty('--accent-blue', `hsl(${hue}, 100%, 60%)`);
-
-            document.getElementById('themeVal').innerText = index + 1;
-        }
-
-        document.getElementById('timbreBtn').addEventListener('click', () => {
-            currentTheme = (currentTheme + 1) % 50;
-            applyTheme(currentTheme);
-        });
-
-        // Tap Rhythm limited STRICTLY to max 8 values
-        const tapBtn = document.getElementById('tapRhythmBtn');
-        tapBtn.addEventListener('click', () => {
-            if (tapTimes.length >= 8) return;
-
-            const now = Date.now();
-            tapTimes.push(now);
-
-            if (tapTimes.length > 1) {
-                let intervals = [];
-                for (let i = 1; i < tapTimes.length; i++) {
-                    intervals.push(tapTimes[i] - tapTimes[i-1]);
-                }
-                const currentBeatIntervalMs = (60000 / bpmVal);
-                baseRhythmRow = intervals.map(ms => Math.max(0.25, Math.min(4.0, ms / currentBeatIntervalMs))).slice(0, 8);
-                activeRhythmRow = [...baseRhythmRow];
+            const rhythmActive = document.getElementById('tempoToggle').classList.contains('on');
+            if (rhythmActive) {
+                activeRhythmRow = [...baseRhythmRow].sort(() => Math.random() - 0.5);
                 updateRhythmDisplay();
             }
 
-            tapBtn.innerText = `TAP RHYTHM (${tapTimes.length}/8)`;
+            document.getElementById('matrixStatus').innerText = 
+                `Matrix Active: ${modeName} | Transposition Shift: +${manualTransposeOffset} | Rhythm: ${rhythmActive ? 'Serial Matrix' : 'Default'}`;
 
-            if (tapTimes.length >= 8) {
-                document.getElementById('rhythmInfo').innerText = "Rhythm Row complete (Limit of 8 values reached).";
-            }
-        });
-
-        document.getElementById('resetRhythmBtn').addEventListener('click', () => {
-            tapTimes = [];
-            baseRhythmRow = [1.0, 0.5, 1.5, 0.75, 1.25, 0.5, 1.0, 0.8];
-            activeRhythmRow = [...baseRhythmRow];
-            tapBtn.innerText = `TAP RHYTHM (0/8)`;
-            document.getElementById('rhythmInfo').innerText = "Rhythm row reset to default series.";
-            updateRhythmDisplay();
-        });
-
-        document.querySelectorAll('.toggle-switch').forEach(sw => {
-            sw.addEventListener('click', () => sw.classList.toggle('on'));
-        });
-
-        document.getElementById('clearBtn').addEventListener('click', () => {
-            baseRow = []; activeRow = [];
             renderPrimeRow();
-            if (isPlaying) stopPlayback();
-        });
+        }
 
-        // Playback Engine
         function playNextStep() {
             if (!isPlaying || activeRow.length === 0) return;
 
             const note = activeRow[currentStep];
             triggerNote(note);
 
-            const counterMelodyOn = document.getElementById('counterMelodyToggle').classList.contains('on');
-            if (counterMelodyOn) {
-                const counterNote = calculateStrictCounterpointNote(note);
-                setTimeout(() => triggerNote(counterNote), 15);
+            const isChordsOn = document.getElementById('chordsToggle').classList.contains('on');
+            if (isChordsOn && currentStep % 2 === 0) {
+                const chordIdx1 = (currentStep + 2) % activeRow.length;
+                const chordIdx2 = (currentStep + 4) % activeRow.length;
+                setTimeout(() => triggerNote(activeRow[chordIdx1]), 30);
+                setTimeout(() => triggerNote(activeRow[chordIdx2]), 60);
             }
 
-            const chordsOn = document.getElementById('chordsToggle').classList.contains('on');
-            if (chordsOn && activeRow.length >= 4) {
-                if (currentStep % 3 === 0 || Math.random() < 0.35) {
-                    const numNotesInChord = Math.floor(Math.random() * 2) + 3;
-                    for (let c = 1; c < numNotesInChord; c++) {
-                        const chordNoteIdx = (currentStep + c * 2) % activeRow.length;
-                        const chordNote = activeRow[chordNoteIdx];
-                        setTimeout(() => triggerNote(chordNote), c * 25);
+            const isCounterOn = document.getElementById('counterMelodyToggle').classList.contains('on');
+            if (isCounterOn) {
+                let counterIdx = (activeRow.length - 1 - currentStep) % activeRow.length;
+                let mainIdx = CHROMATIC_SCALE.indexOf(note);
+                let counterNoteIdx = CHROMATIC_SCALE.indexOf(activeRow[counterIdx]);
+
+                if (prevMainIdx !== null && prevCounterIdx !== null) {
+                    let mainMotion = mainIdx - prevMainIdx;
+                    let counterMotion = counterNoteIdx - prevCounterIdx;
+
+                    if ((mainMotion > 0 && counterMotion > 0) || (mainMotion < 0 && counterMotion < 0)) {
+                        counterNoteIdx = (counterNoteIdx + 2) % CHROMATIC_SCALE.length;
+                    }
+
+                    let interval = Math.abs(mainIdx - counterNoteIdx);
+                    if (interval === 0 || interval === 6) { 
+                        counterNoteIdx = (counterNoteIdx + 1) % CHROMATIC_SCALE.length;
                     }
                 }
+
+                prevMainIdx = mainIdx;
+                prevCounterIdx = counterNoteIdx;
+
+                setTimeout(() => {
+                    playSingleTone(getNoteFreq(CHROMATIC_SCALE[counterNoteIdx]));
+                }, 120);
             }
 
             renderPrimeRow();
 
-            currentStep++;
-            if (currentStep >= activeRow.length) {
-                currentStep = 0;
+            let rhythmMultiplier = 1.0;
+            const rhythmActive = document.getElementById('tempoToggle').classList.contains('on');
+            if (rhythmActive && activeRhythmRow.length > 0) {
+                rhythmMultiplier = activeRhythmRow[currentStep % activeRhythmRow.length];
+            }
+
+            const stepDuration = ((60 / bpmVal) * 1000 * 0.5) * rhythmMultiplier;
+
+            currentStep = (currentStep + 1) % activeRow.length;
+
+            if (currentStep === 0) {
                 applyRealtimeMatrixTransformation();
             }
 
-            const baseIntervalMs = (60000 / bpmVal);
-            const rhythmMatrixOn = document.getElementById('tempoToggle').classList.contains('on');
-            
-            let rhythmMult = 1.0;
-            if (rhythmMatrixOn && activeRhythmRow.length > 0) {
-                rhythmMult = activeRhythmRow[currentStep % activeRhythmRow.length];
-            }
-
-            const stepDelayMs = baseIntervalMs * rhythmMult;
-            stepTimer = setTimeout(playNextStep, stepDelayMs);
+            stepTimer = setTimeout(playNextStep, stepDuration);
         }
 
-        function startPlayback() {
-            if (activeRow.length === 0) {
-                baseRow = [...CHROMATIC_SCALE].sort(() => Math.random() - 0.5).slice(0, 12);
-                activeRow = [...baseRow];
+        function togglePlay() {
+            const btn = document.getElementById('playBtn');
+            const led = document.getElementById('statusLed');
+
+            if (isPlaying) {
+                isPlaying = false;
+                clearTimeout(stepTimer);
+                btn.innerText = 'PLAY';
+                btn.classList.remove('playing');
+                led.classList.remove('active');
+                renderPrimeRow();
+            } else {
+                if (activeRow.length === 0) return;
+                isPlaying = true;
+                currentStep = 0;
+                btn.innerText = 'STOP';
+                btn.classList.add('playing');
+                led.classList.add('active');
+                playNextStep();
             }
-            isPlaying = true; currentStep = 0;
-            prevMainIdx = null; prevCounterIdx = null;
-            
-            const playBtn = document.getElementById('playBtn');
-            playBtn.innerText = 'STOP';
-            playBtn.classList.add('playing');
-            document.getElementById('statusLed').classList.add('active');
-            playNextStep();
         }
 
-        function stopPlayback() {
-            isPlaying = false;
-            if (stepTimer) clearTimeout(stepTimer);
-            const playBtn = document.getElementById('playBtn');
-            playBtn.innerText = 'PLAY';
-            playBtn.classList.remove('playing');
-            document.getElementById('statusLed').classList.remove('active');
+        // Setup Controls & Knobs Interactive Drag
+        function setupKnob(id, min, max, labelId, formatter) {
+            const knob = document.getElementById(id);
+            const valDisplay = document.getElementById(labelId);
+            let startY = 0;
+            let currentVal = parseInt(knob.dataset.val || 50);
+
+            const updateValue = (deltaY) => {
+                currentVal = Math.max(0, Math.min(100, currentVal - deltaY));
+                knob.dataset.val = currentVal;
+                
+                const angle = (currentVal / 100) * 270 - 135;
+                knob.style.transform = `rotate(${angle}deg)`;
+
+                const computedValue = min + (currentVal / 100) * (max - min);
+                if (formatter) {
+                    valDisplay.innerText = formatter(computedValue, currentVal);
+                } else {
+                    valDisplay.innerText = Math.round(computedValue);
+                }
+            };
+
+            const onPointerDown = (e) => {
+                startY = e.clientY || (e.touches && e.touches[0].clientY);
+                
+                const onPointerMove = (eMove) => {
+                    const clientY = eMove.clientY || (eMove.touches && eMove.touches[0].clientY);
+                    const deltaY = clientY - startY;
+                    startY = clientY;
+                    updateValue(deltaY);
+                };
+
+                const onPointerUp = () => {
+                    window.removeEventListener('mousemove', onPointerMove);
+                    window.removeEventListener('mouseup', onPointerUp);
+                    window.removeEventListener('touchmove', onPointerMove);
+                    window.removeEventListener('touchend', onPointerUp);
+                };
+
+                window.addEventListener('mousemove', onPointerMove);
+                window.addEventListener('mouseup', onPointerUp);
+                window.addEventListener('touchmove', onPointerMove, { passive: false });
+                window.addEventListener('touchend', onPointerUp);
+            };
+
+            knob.addEventListener('mousedown', onPointerDown);
+            knob.addEventListener('touchstart', onPointerDown, { passive: false });
+
+            updateValue(0);
+        }
+
+        // Event Listeners Initialization
+        document.addEventListener('DOMContentLoaded', () => {
+            buildPiano();
             renderPrimeRow();
-        }
+            updateRhythmDisplay();
+            applyTheme(0);
 
-        document.getElementById('playBtn').addEventListener('click', () => {
-            if (isPlaying) stopPlayback(); else startPlayback();
+            document.getElementById('playBtn').addEventListener('click', togglePlay);
+
+            document.getElementById('clearBtn').addEventListener('click', () => {
+                baseRow = [];
+                activeRow = [];
+                currentStep = 0;
+                renderPrimeRow();
+            });
+
+            document.getElementById('powerBtn').addEventListener('click', (e) => {
+                isPowerOn = !isPowerOn;
+                e.target.classList.toggle('on', isPowerOn);
+                e.target.innerText = isPowerOn ? 'ON' : 'OFF';
+                if (!isPowerOn && isPlaying) togglePlay();
+            });
+
+            document.getElementById('transposeBtn').addEventListener('click', () => {
+                manualTransposeOffset = (manualTransposeOffset + 1) % CHROMATIC_SCALE.length;
+                applyRealtimeMatrixTransformation();
+            });
+
+            document.getElementById('timbreBtn').addEventListener('click', () => {
+                currentTheme = (currentTheme + 1) % colorThemes.length;
+                applyTheme(currentTheme);
+            });
+
+            // Toggles Setup
+            ['tempoToggle', 'chordsToggle', 'counterMelodyToggle'].forEach(id => {
+                document.getElementById(id).addEventListener('click', (e) => {
+                    e.target.classList.toggle('on');
+                });
+            });
+
+            // Rhythm Tap Handler
+            const tapBtn = document.getElementById('tapRhythmBtn');
+            const resetTapBtn = document.getElementById('resetRhythmBtn');
+
+            tapBtn.addEventListener('click', () => {
+                const now = performance.now();
+                tapTimes.push(now);
+
+                if (tapTimes.length > 1) {
+                    const diffs = [];
+                    for (let i = 1; i < tapTimes.length; i++) {
+                        diffs.push(tapTimes[i] - tapTimes[i - 1]);
+                    }
+                    const avg = diffs.reduce((a, b) => a + b) / diffs.length;
+                    
+                    baseRhythmRow = diffs.map(d => Math.max(0.2, Math.min(2.5, d / avg)));
+                    activeRhythmRow = [...baseRhythmRow];
+                    updateRhythmDisplay();
+                }
+
+                tapBtn.innerText = `TAP RHYTHM (${tapTimes.length}/8)`;
+                if (tapTimes.length >= 8) {
+                    tapTimes = [];
+                }
+            });
+
+            resetTapBtn.addEventListener('click', () => {
+                tapTimes = [];
+                baseRhythmRow = [1.0, 0.5, 1.5, 0.75, 1.25, 0.5, 1.0, 0.8];
+                activeRhythmRow = [...baseRhythmRow];
+                tapBtn.innerText = 'TAP RHYTHM (0/8)';
+                updateRhythmDisplay();
+            });
+
+            // Knobs Configuration
+            setupKnob('bpmKnob', 40, 240, 'bpmVal', (v) => { bpmVal = Math.round(v); return `${bpmVal} BPM`; });
+            
+            setupKnob('octaveKnob', 0, 3, 'octaveVal', (v) => {
+                octaveRangeSpan = Math.round(v);
+                const labels = ["1 Octave", "3 Octaves", "5 Octaves", "7 Octaves"];
+                return labels[octaveRangeSpan];
+            });
+
+            setupKnob('envKnob', 0.1, 1.0, 'envVal', (v) => {
+                envelopeVal = v;
+                if (v < 0.3) return "Short Decay";
+                if (v < 0.7) return "Med Decay";
+                return "Long Decay";
+            });
+
+            setupKnob('volKnob', 0, 100, 'volVal', (v) => { volumeVal = v / 100; return `${Math.round(v)}%`; });
+            
+            setupKnob('dynKnob', 0, 100, 'dynVal', (v) => {
+                dynamicsVal = v / 100;
+                if (v < 30) return "pp";
+                if (v < 50) return "mp";
+                if (v < 75) return "mf";
+                return "ff";
+            });
+
+            setupKnob('revKnob', 0, 100, 'revVal', (v) => {
+                reverbVal = v / 100;
+                if (reverbGainNode) reverbGainNode.gain.value = reverbVal * 2.5;
+                return `${Math.round(v)}%`;
+            });
+
+            // MP3 Recording Setup
+            const recBtn = document.getElementById('recBtn');
+            recBtn.addEventListener('click', () => {
+                if (!isRecording) {
+                    initAudioFX();
+                    audioChunks = [];
+                    const stream = recordDestination.stream;
+                    mediaRecorder = new MediaRecorder(stream);
+
+                    mediaRecorder.ondataavailable = (e) => {
+                        if (e.data.size > 0) audioChunks.push(e.data);
+                    };
+
+                    mediaRecorder.onstop = async () => {
+                        const blob = new Blob(audioChunks, { type: 'audio/webm' });
+                        const arrayBuffer = await blob.arrayBuffer();
+                        const audioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
+
+                        // Encode AudioBuffer to MP3 via lamejs
+                        const channels = audioBuffer.numberOfChannels;
+                        const sampleRate = audioBuffer.sampleRate;
+                        const mp3encoder = new lamejs.Mp3Encoder(channels, sampleRate, 128);
+                        const mp3Data = [];
+
+                        const left = audioBuffer.getChannelData(0);
+                        const right = channels > 1 ? audioBuffer.getChannelData(1) : left;
+
+                        const sampleBlockSize = 1152;
+                        const leftChunk = new Int16Array(sampleBlockSize);
+                        const rightChunk = new Int16Array(sampleBlockSize);
+
+                        for (let i = 0; i < left.length; i += sampleBlockSize) {
+                            for (let j = 0; j < sampleBlockSize; j++) {
+                                leftChunk[j] = Math.max(-1, Math.min(1, left[i + j] || 0)) * 0x7FFF;
+                                rightChunk[j] = Math.max(-1, Math.min(1, right[i + j] || 0)) * 0x7FFF;
+                            }
+                            const mp3buf = mp3encoder.encodeBuffer(leftChunk, rightChunk);
+                            if (mp3buf.length > 0) mp3Data.push(mp3buf);
+                        }
+
+                        const endBuf = mp3encoder.flush();
+                        if (endBuf.length > 0) mp3Data.push(endBuf);
+
+                        const mp3Blob = new Blob(mp3Data, { type: 'audio/mp3' });
+                        const url = URL.createObjectURL(mp3Blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = 'dodecaphonic-melody.mp3';
+                        a.click();
+                    };
+
+                    mediaRecorder.start();
+                    isRecording = true;
+                    recBtn.classList.add('recording');
+                } else {
+                    mediaRecorder.stop();
+                    isRecording = false;
+                    recBtn.classList.remove('recording');
+                }
+            });
         });
-
-        window.addEventListener('keydown', (e) => {
-            const keyChar = e.key.toUpperCase();
-            const whiteMatch = WHITE_KEYS.find(k => k.key === keyChar);
-            const blackMatch = BLACK_KEYS.find(k => k.key === keyChar);
-
-            if (whiteMatch) manualNoteTrigger(whiteMatch.note);
-            if (blackMatch) manualNoteTrigger(blackMatch.note);
-        });
-
-        buildPiano();
-        renderPrimeRow();
-        updateRhythmDisplay();
-        applyTheme(0);
     </script>
 </body>
 </html>
