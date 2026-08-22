@@ -4,7 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
   <title>Sample Radio Sound Station</title>
-  <!-- LameJS for real browser-side MP3 encoding -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/lamejs/1.2.1/lame.min.js"></script>
   <style>
     :root {
@@ -49,7 +48,7 @@
       margin: 0;
       padding: 0;
       overflow: hidden;
-      background-color: #ffffff !important; /* רקע לבן קבוע */
+      background-color: #ffffff !important;
       font-family: 'Courier New', Courier, monospace;
       display: flex;
       justify-content: center;
@@ -73,7 +72,6 @@
       background: radial-gradient(circle at 50% 30%, var(--wood-light) 0%, var(--wood-mid) 50%, var(--wood-dark) 100%);
       border-radius: 20px;
       border: 4px solid var(--brass-dark);
-      /* הצללה חזקה על ה后台 הלבן */
       box-shadow: 
         0 25px 60px rgba(0, 0, 0, 0.4),
         0 10px 20px rgba(0, 0, 0, 0.25),
@@ -320,12 +318,6 @@
       position: relative;
     }
 
-    .station-card.drag-over {
-      border-color: #00ff66 !important;
-      box-shadow: 0 0 10px #00ff66 !important;
-      background: #1a3a1a !important;
-    }
-
     .station-card.active {
       background: linear-gradient(180deg, #ffd778 0%, #996e19 100%);
       border-color: #fff0d4;
@@ -364,6 +356,22 @@
 
     .station-card.is-local.active .station-name {
       color: #ffffff;
+    }
+
+    .station-actions {
+      display: flex;
+      align-items: center;
+      gap: 3px;
+    }
+
+    .upload-icon-btn {
+      font-size: 0.45rem;
+      background: var(--brass-dark);
+      color: #fff;
+      border: none;
+      border-radius: 2px;
+      padding: 1px 3px;
+      cursor: pointer;
     }
 
     .station-indicator {
@@ -546,7 +554,7 @@
       <div class="stations-rack">
         <div class="section-title">
           <span>STATIONS & VOL MIXER</span>
-          <span>DRAG FILES HERE</span>
+          <span>TAP '+' TO LOAD FILE</span>
         </div>
         <div class="stations-grid" id="stations-grid"></div>
       </div>
@@ -726,16 +734,26 @@
         header.className = 'station-header';
         header.innerHTML = `
           <span class="station-name">${st.name}</span>
-          <div class="station-indicator"></div>
+          <div class="station-actions">
+            <button class="upload-icon-btn" title="טען קובץ">+</button>
+            <div class="station-indicator"></div>
+          </div>
         `;
 
-        header.addEventListener('click', () => {
+        header.querySelector('.station-name').addEventListener('click', () => {
           if (!isPowerOn) return;
           st.active = !st.active;
           lastSelectedStation = idx;
           updateTuningPointer(idx);
           updateStationsAudioState();
           renderStationsUI();
+        });
+
+        // בלחיצה על פלוס פותח את חלונית הקבצים של האייפון
+        header.querySelector('.upload-icon-btn').addEventListener('click', (e) => {
+          e.stopPropagation();
+          lastSelectedStation = idx;
+          fileInput.click();
         });
 
         const slider = document.createElement('input');
@@ -750,23 +768,6 @@
           st.volume = parseFloat(e.target.value);
           if (st.gainNode && audioCtx) {
             st.gainNode.gain.setTargetAtTime(st.volume, audioCtx.currentTime, 0.01);
-          }
-        });
-
-        card.addEventListener('dragover', (e) => {
-          e.preventDefault();
-          card.classList.add('drag-over');
-        });
-
-        card.addEventListener('dragleave', () => {
-          card.classList.remove('drag-over');
-        });
-
-        card.addEventListener('drop', async (e) => {
-          e.preventDefault();
-          card.classList.remove('drag-over');
-          if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-            await loadFileToStation(e.dataTransfer.files[0], idx);
           }
         });
 
@@ -893,10 +894,10 @@
       });
 
       if (activeStations.length === 0) {
-        setStatusText("press bbc archive to load sample. download and dragg on the station", true);
+        setStatusText("TAP '+' TO CHOOSE A FILE OR PRESS BBC", true);
       } else if (activeStations.length === 1) {
         if (!activeStations[0].buffer) {
-          setStatusText("press bbc archive to load sample. download and dragg on the station", true);
+          setStatusText("TAP '+' TO CHOOSE A FILE OR PRESS BBC", true);
         } else {
           setStatusText(`TUNED: ${activeStations[0].name}`);
         }
@@ -1175,16 +1176,6 @@
 
       setStatusText("MP3 DOWNLOADED!");
     }
-
-    const dropZone = document.getElementById('drop-zone');
-    dropZone.addEventListener('dragover', (e) => e.preventDefault());
-    dropZone.addEventListener('drop', async (e) => {
-      e.preventDefault();
-      if (e.target.closest('.station-card')) return;
-      if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-        await loadFileToStation(e.dataTransfer.files[0], lastSelectedStation);
-      }
-    });
 
     renderStationsUI();
     updateTuningPointer(0);
