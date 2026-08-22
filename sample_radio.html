@@ -20,7 +20,6 @@
       --glass-shine: rgba(255, 255, 255, 0.08);
       --card-bg-start: #2b261f;
       --card-bg-end: #171410;
-      --app-bg: #050302;
     }
 
     body.light-theme {
@@ -36,7 +35,6 @@
       --glass-shine: rgba(255, 255, 255, 0.4);
       --card-bg-start: #fff0d6;
       --card-bg-end: #ebd0a7;
-      --app-bg: #2b1d14;
     }
 
     * {
@@ -51,13 +49,12 @@
       margin: 0;
       padding: 0;
       overflow: hidden;
-      background-color: var(--app-bg);
+      background-color: #ffffff !important; /* רקע לבן קבוע */
       font-family: 'Courier New', Courier, monospace;
       display: flex;
       justify-content: center;
       align-items: center;
       direction: ltr;
-      transition: background-color 0.4s ease;
     }
 
     .iphone-wrapper {
@@ -65,7 +62,7 @@
       max-width: 430px;
       height: 100%;
       max-height: 932px;
-      padding: 10px;
+      padding: 15px;
       display: flex;
       flex-direction: column;
       justify-content: center;
@@ -76,8 +73,10 @@
       background: radial-gradient(circle at 50% 30%, var(--wood-light) 0%, var(--wood-mid) 50%, var(--wood-dark) 100%);
       border-radius: 20px;
       border: 4px solid var(--brass-dark);
+      /* הצללה חזקה על ה后台 הלבן */
       box-shadow: 
-        0 20px 50px rgba(0,0,0,0.95),
+        0 25px 60px rgba(0, 0, 0, 0.4),
+        0 10px 20px rgba(0, 0, 0, 0.25),
         inset 0 2px 4px rgba(255,255,255,0.3),
         inset 0 -8px 20px rgba(0,0,0,0.9);
       padding: 14px;
@@ -85,7 +84,7 @@
       flex-direction: column;
       gap: 10px;
       position: relative;
-      transition: all 0.4s ease;
+      transition: background 0.4s ease, border-color 0.4s ease;
     }
 
     .top-header-bar {
@@ -104,7 +103,7 @@
       padding: 2px 8px;
       border-radius: 10px;
       cursor: pointer;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.5);
+      box-shadow: 0 2px 4px rgba(0,0,0,0.3);
     }
 
     .top-panel {
@@ -158,7 +157,7 @@
       background: radial-gradient(circle at 50% 100%, #ffefc2 0%, #d4b068 70%, #6e521c 100%);
       border: 2px solid var(--brass);
       border-radius: 8px;
-      box-shadow: inset 0 0 10px rgba(0,0,0,0.7), 0 2px 5px rgba(0,0,0,0.5);
+      box-shadow: inset 0 0 10px rgba(0,0,0,0.7), 0 2px 5px rgba(0,0,0,0.3);
       position: relative;
       overflow: hidden;
       display: flex;
@@ -316,7 +315,7 @@
       flex-direction: column;
       justify-content: space-between;
       height: 52px;
-      box-shadow: 0 3px 5px rgba(0,0,0,0.5), inset 0 1px 1px rgba(255,255,255,0.2);
+      box-shadow: 0 3px 5px rgba(0,0,0,0.3), inset 0 1px 1px rgba(255,255,255,0.2);
       transition: all 0.15s ease;
       position: relative;
     }
@@ -432,7 +431,7 @@
       border-radius: 50%;
       background: radial-gradient(circle at 35% 35%, #3a3a3a 0%, #111111 70%, #000 100%);
       border: 2px solid var(--brass-dark);
-      box-shadow: 0 4px 8px rgba(0,0,0,0.9), inset 0 1px 2px rgba(255,255,255,0.3);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.6), inset 0 1px 2px rgba(255,255,255,0.3);
       position: relative;
       transition: transform 0.05s linear;
     }
@@ -474,7 +473,7 @@
       background: linear-gradient(180deg, #d6c5a3 0%, #8c7a56 100%);
       border: 1.5px solid var(--brass-bright);
       border-radius: 4px;
-      box-shadow: 0 4px 0 #3b301b, 0 5px 8px rgba(0,0,0,0.7);
+      box-shadow: 0 4px 0 #3b301b, 0 5px 8px rgba(0,0,0,0.5);
       cursor: pointer;
       font-family: inherit;
       font-weight: bold;
@@ -490,7 +489,7 @@
 
     .vintage-btn:active, .vintage-btn.pressed {
       transform: translateY(3px);
-      box-shadow: 0 1px 0 #3b301b, 0 2px 4px rgba(0,0,0,0.7);
+      box-shadow: 0 1px 0 #3b301b, 0 2px 4px rgba(0,0,0,0.5);
     }
 
     .vintage-btn.rec-btn {
