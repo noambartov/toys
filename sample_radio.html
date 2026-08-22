@@ -316,6 +316,12 @@
       box-shadow: 0 3px 5px rgba(0,0,0,0.3), inset 0 1px 1px rgba(255,255,255,0.2);
       transition: all 0.15s ease;
       position: relative;
+      touch-action: none;
+    }
+
+    .station-card.drag-over {
+      border-color: #00ff66 !important;
+      box-shadow: 0 0 10px #00ff66;
     }
 
     .station-card.active {
@@ -393,6 +399,7 @@
       accent-color: var(--brass-dark);
       cursor: pointer;
       margin: 0;
+      touch-action: pan-x;
     }
 
     .fx-rack {
@@ -493,6 +500,7 @@
       align-items: center;
       text-align: center;
       transition: all 0.1s ease;
+      touch-action: none;
     }
 
     .vintage-btn:active, .vintage-btn.pressed {
@@ -708,6 +716,7 @@
     const needle = document.getElementById('needle');
     const stationsGrid = document.getElementById('stations-grid');
     const tuningPointer = document.getElementById('tuning-pointer');
+    const dropZone = document.getElementById('drop-zone');
 
     btnTheme.addEventListener('click', () => {
       document.body.classList.toggle('light-theme');
@@ -721,6 +730,40 @@
       } else {
         statusDisplay.classList.add('no-scroll');
       }
+    }
+
+    // פונקציית עזר לניהול גרירה ולחיצה על אלמנט
+    function attachDragAndClick(element, onClickCallback) {
+      let isDragging = false;
+      let startX, startY;
+      let hasMoved = false;
+
+      element.addEventListener('pointerdown', (e) => {
+        if (e.target.tagName === 'INPUT') return; // לא להפריע לסליידר
+        isDragging = true;
+        hasMoved = false;
+        startX = e.clientX;
+        startY = e.clientY;
+        element.setPointerCapture(e.pointerId);
+      });
+
+      element.addEventListener('pointermove', (e) => {
+        if (!isDragging) return;
+        const dx = e.clientX - startX;
+        const dy = e.clientY - startY;
+        if (Math.abs(dx) > 5 || Math.abs(dy) > 5) {
+          hasMoved = true;
+        }
+      });
+
+      element.addEventListener('pointerup', (e) => {
+        if (!isDragging) return;
+        isDragging = false;
+        try { element.releasePointerCapture(e.pointerId); } catch(err){}
+        if (!hasMoved && onClickCallback) {
+          onClickCallback(e);
+        }
+      });
     }
 
     function renderStationsUI() {
@@ -740,7 +783,12 @@
           </div>
         `;
 
-        header.querySelector('.station-name').addEventListener('click', () => {
+        attachDragAndClick(card, (e) => {
+          if (e.target.classList.contains('upload-icon-btn')) {
+            lastSelectedStation = idx;
+            fileInput.click();
+            return;
+          }
           if (!isPowerOn) return;
           st.active = !st.active;
           lastSelectedStation = idx;
@@ -749,11 +797,22 @@
           renderStationsUI();
         });
 
-        // בלחיצה על פלוס פותח את חלונית הקבצים של האייפון
-        header.querySelector('.upload-icon-btn').addEventListener('click', (e) => {
-          e.stopPropagation();
-          lastSelectedStation = idx;
-          fileInput.click();
+        // תמיכה בגרירת קבצים ישירות למחשב
+        card.addEventListener('dragover', (e) => {
+          e.preventDefault();
+          card.classList.add('drag-over');
+        });
+
+        card.addEventListener('dragleave', () => {
+          card.classList.remove('drag-over');
+        });
+
+        card.addEventListener('drop', (e) => {
+          e.preventDefault();
+          card.classList.remove('drag-over');
+          if (e.dataTransfer.files.length) {
+            loadFileToStation(e.dataTransfer.files[0], idx);
+          }
         });
 
         const slider = document.createElement('input');
@@ -1044,7 +1103,8 @@
       needle.style.transform = `rotate(${degrees}deg)`;
     }
 
-    btnPower.addEventListener('click', async () => {
+    // חיבור כפתורי השליטה עם זיהוי נכון בין גרירה ללחיצה
+    attachDragAndClick(btnPower, async () => {
       initAudioGraph();
       if (audioCtx.state === 'suspended') await audioCtx.resume();
 
@@ -1060,7 +1120,7 @@
       }
     });
 
-    btnBbc.addEventListener('click', () => {
+    attachDragAndClick(btnBbc, () => {
       btnBbc.classList.add('pressed');
       setTimeout(() => btnBbc.classList.remove('pressed'), 180);
 
@@ -1072,7 +1132,7 @@
       window.open(url, '_blank');
     });
 
-    btnLoad.addEventListener('click', () => {
+    attachDragAndClick(btnLoad, () => {
       btnLoad.classList.add('pressed');
       setTimeout(() => btnLoad.classList.remove('pressed'), 180);
       fileInput.click();
@@ -1084,7 +1144,7 @@
       }
     });
 
-    btnRec.addEventListener('click', () => {
+    attachDragAndClick(btnRec, () => {
       if (!isPowerOn && !isRecording) {
         setStatusText("TURN POWER ON FIRST");
         return;
