@@ -2,7 +2,7 @@
 <html lang="he" dir="rtl">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>Sample Radio Sound Station</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/lamejs/1.2.1/lame.min.js"></script>
   <style>
@@ -40,47 +40,49 @@
       box-sizing: border-box;
       user-select: none;
       -webkit-user-select: none;
+      -webkit-touch-callout: none;
     }
 
     html, body {
       width: 100%;
       height: 100%;
+      min-height: 100dvh;
       margin: 0;
       padding: 0;
-      overflow: hidden;
-      background-color: #ffffff !important;
-      font-family: 'Courier New', Courier, monospace;
+      background-color: #0d0a07 !important;
+      font-family: -apple-system, BlinkMacSystemFont, 'Courier New', Courier, monospace;
       display: flex;
       justify-content: center;
       align-items: center;
       direction: ltr;
+      overflow-x: hidden;
     }
 
     .iphone-wrapper {
       width: 100%;
       max-width: 430px;
-      height: 100%;
-      max-height: 932px;
-      padding: 15px;
+      min-height: 100dvh;
+      padding: 10px;
       display: flex;
       flex-direction: column;
       justify-content: center;
+      align-items: center;
+      box-sizing: border-box;
     }
 
     .radio-box {
       width: 100%;
       background: radial-gradient(circle at 50% 30%, var(--wood-light) 0%, var(--wood-mid) 50%, var(--wood-dark) 100%);
-      border-radius: 20px;
-      border: 4px solid var(--brass-dark);
+      border-radius: 16px;
+      border: 3px solid var(--brass-dark);
       box-shadow: 
-        0 25px 60px rgba(0, 0, 0, 0.4),
-        0 10px 20px rgba(0, 0, 0, 0.25),
+        0 15px 35px rgba(0, 0, 0, 0.6),
         inset 0 2px 4px rgba(255,255,255,0.3),
         inset 0 -8px 20px rgba(0,0,0,0.9);
-      padding: 14px;
+      padding: 12px;
       display: flex;
       flex-direction: column;
-      gap: 10px;
+      gap: 8px;
       position: relative;
       transition: background 0.4s ease, border-color 0.4s ease;
     }
@@ -89,7 +91,6 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: -4px;
     }
 
     .theme-toggle-btn {
@@ -97,8 +98,8 @@
       border: 1px solid var(--brass-bright);
       color: #000;
       font-weight: bold;
-      font-size: 0.55rem;
-      padding: 2px 8px;
+      font-size: 0.6rem;
+      padding: 3px 10px;
       border-radius: 10px;
       cursor: pointer;
       box-shadow: 0 2px 4px rgba(0,0,0,0.3);
@@ -106,8 +107,8 @@
 
     .top-panel {
       display: flex;
-      gap: 10px;
-      height: 70px;
+      gap: 8px;
+      height: 60px;
     }
 
     .speaker-grill {
@@ -140,9 +141,9 @@
       position: relative;
       background: linear-gradient(180deg, #ffd983 0%, #a67c1e 100%);
       color: #1a0b01;
-      padding: 4px 10px;
+      padding: 4px 8px;
       font-weight: 900;
-      font-size: 0.65rem;
+      font-size: 0.6rem;
       border-radius: 3px;
       letter-spacing: 1px;
       border: 1px solid #4a3400;
@@ -150,7 +151,7 @@
     }
 
     .meter-window {
-      width: 90px;
+      width: 80px;
       height: 100%;
       background: radial-gradient(circle at 50% 100%, #ffefc2 0%, #d4b068 70%, #6e521c 100%);
       border: 2px solid var(--brass);
@@ -164,18 +165,17 @@
     }
 
     .meter-label {
-      margin-top: 4px;
+      margin-top: 3px;
       font-size: 0.5rem;
       font-weight: bold;
       color: #3b2704;
-      letter-spacing: 0.5px;
     }
 
     .meter-scale {
       position: absolute;
-      top: 18px;
-      width: 75px;
-      height: 40px;
+      top: 16px;
+      width: 65px;
+      height: 35px;
       border-top: 2px dashed #422d05;
       border-radius: 50%;
     }
@@ -184,7 +184,7 @@
       position: absolute;
       bottom: -10px;
       width: 2px;
-      height: 60px;
+      height: 50px;
       background-color: #c90000;
       transform-origin: bottom center;
       transform: rotate(-45deg);
@@ -194,9 +194,9 @@
 
     .needle-cap {
       position: absolute;
-      bottom: -8px;
-      width: 14px;
-      height: 14px;
+      bottom: -6px;
+      width: 12px;
+      height: 12px;
       background: #1a1a1a;
       border-radius: 50%;
       border: 2px solid var(--brass);
@@ -207,13 +207,12 @@
       background: var(--dial-bg);
       border: 2px solid var(--brass-dark);
       border-radius: 6px;
-      padding: 6px 10px;
+      padding: 6px 8px;
       box-shadow: inset 0 0 12px rgba(0,0,0,0.95);
       position: relative;
       display: flex;
       flex-direction: column;
-      gap: 2px;
-      transition: background 0.4s ease;
+      gap: 4px;
       overflow: hidden;
     }
 
@@ -229,7 +228,6 @@
       width: 100%;
       overflow: hidden;
       white-space: nowrap;
-      position: relative;
     }
 
     .dial-text {
@@ -255,7 +253,7 @@
     }
 
     .tuning-scale-container {
-      height: 14px;
+      height: 12px;
       width: 100%;
       position: relative;
       background: repeating-linear-gradient(
@@ -281,9 +279,9 @@
 
     .section-title {
       color: var(--brass);
-      font-size: 0.55rem;
+      font-size: 0.5rem;
       font-weight: bold;
-      letter-spacing: 1px;
+      letter-spacing: 0.5px;
       text-transform: uppercase;
       margin-bottom: 4px;
       display: flex;
@@ -294,40 +292,33 @@
       background: rgba(0, 0, 0, 0.25);
       border: 1.5px solid var(--brass-dark);
       border-radius: 8px;
-      padding: 8px;
+      padding: 6px;
       box-shadow: inset 0 2px 6px rgba(0,0,0,0.4);
     }
 
     .stations-grid {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
-      gap: 6px;
+      gap: 5px;
     }
 
     .station-card {
       background: linear-gradient(180deg, var(--card-bg-start) 0%, var(--card-bg-end) 100%);
       border: 1px solid var(--gold-bevel);
       border-radius: 5px;
-      padding: 3px 4px;
+      padding: 4px;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
-      height: 52px;
-      box-shadow: 0 3px 5px rgba(0,0,0,0.3), inset 0 1px 1px rgba(255,255,255,0.2);
-      transition: all 0.15s ease;
+      height: 48px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.3);
       position: relative;
       touch-action: none;
-    }
-
-    .station-card.drag-over {
-      border-color: #00ff66 !important;
-      box-shadow: 0 0 10px #00ff66;
     }
 
     .station-card.active {
       background: linear-gradient(180deg, #ffd778 0%, #996e19 100%);
       border-color: #fff0d4;
-      box-shadow: inset 0 2px 4px rgba(0,0,0,0.7), 0 0 8px rgba(230, 194, 128, 0.5);
     }
 
     .station-card.is-local {
@@ -343,11 +334,10 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      cursor: pointer;
     }
 
     .station-name {
-      font-size: 0.5rem;
+      font-size: 0.48rem;
       font-weight: bold;
       color: var(--brass);
       pointer-events: none;
@@ -356,27 +346,23 @@
       text-overflow: ellipsis;
     }
 
-    .station-card.active .station-name {
-      color: #0f0701;
-    }
-
-    .station-card.is-local.active .station-name {
-      color: #ffffff;
-    }
+    .station-card.active .station-name { color: #0f0701; }
+    .station-card.is-local.active .station-name { color: #ffffff; }
 
     .station-actions {
       display: flex;
       align-items: center;
-      gap: 3px;
+      gap: 2px;
     }
 
     .upload-icon-btn {
-      font-size: 0.45rem;
+      font-size: 0.55rem;
+      line-height: 1;
       background: var(--brass-dark);
       color: #fff;
       border: none;
-      border-radius: 2px;
-      padding: 1px 3px;
+      border-radius: 3px;
+      padding: 2px 4px;
       cursor: pointer;
     }
 
@@ -395,7 +381,7 @@
 
     .station-slider {
       width: 100%;
-      height: 10px;
+      height: 12px;
       accent-color: var(--brass-dark);
       cursor: pointer;
       margin: 0;
@@ -406,32 +392,31 @@
       background: rgba(0, 0, 0, 0.25);
       border: 1.5px solid var(--brass-dark);
       border-radius: 8px;
-      padding: 8px;
+      padding: 6px;
     }
 
     .knobs-grid {
       display: grid;
       grid-template-columns: repeat(5, 1fr);
-      gap: 4px;
+      gap: 2px;
     }
 
     .knob-container {
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 4px;
+      gap: 2px;
     }
 
     .knob-label {
       color: var(--brass);
       font-size: 0.45rem;
       font-weight: bold;
-      letter-spacing: 0.5px;
     }
 
     .knob-wrapper {
-      width: 48px;
-      height: 48px;
+      width: 42px;
+      height: 42px;
       position: relative;
       display: flex;
       justify-content: center;
@@ -441,22 +426,22 @@
     }
 
     .knob-bakelite {
-      width: 42px;
-      height: 42px;
+      width: 36px;
+      height: 36px;
       border-radius: 50%;
       background: radial-gradient(circle at 35% 35%, #3a3a3a 0%, #111111 70%, #000 100%);
-      border: 2px solid var(--brass-dark);
-      box-shadow: 0 4px 8px rgba(0,0,0,0.6), inset 0 1px 2px rgba(255,255,255,0.3);
+      border: 1.5px solid var(--brass-dark);
+      box-shadow: 0 3px 6px rgba(0,0,0,0.6);
       position: relative;
       transition: transform 0.05s linear;
     }
 
     .knob-pointer-line {
       position: absolute;
-      top: 3px;
+      top: 2px;
       left: 50%;
-      width: 3px;
-      height: 14px;
+      width: 2px;
+      height: 12px;
       background: #ffaa00;
       transform: translateX(-50%);
       border-radius: 2px;
@@ -466,14 +451,14 @@
     .buttons-panel {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
-      gap: 8px;
+      gap: 6px;
     }
 
     .button-wrapper {
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 3px;
+      gap: 2px;
     }
 
     .button-label {
@@ -484,11 +469,11 @@
 
     .vintage-btn {
       width: 100%;
-      height: 36px;
+      height: 34px;
       background: linear-gradient(180deg, #d6c5a3 0%, #8c7a56 100%);
       border: 1.5px solid var(--brass-bright);
       border-radius: 4px;
-      box-shadow: 0 4px 0 #3b301b, 0 5px 8px rgba(0,0,0,0.5);
+      box-shadow: 0 3px 0 #3b301b, 0 4px 6px rgba(0,0,0,0.5);
       cursor: pointer;
       font-family: inherit;
       font-weight: bold;
@@ -499,12 +484,11 @@
       justify-content: center;
       align-items: center;
       text-align: center;
-      transition: all 0.1s ease;
       touch-action: none;
     }
 
     .vintage-btn:active, .vintage-btn.pressed {
-      transform: translateY(3px);
+      transform: translateY(2px);
       box-shadow: 0 1px 0 #3b301b, 0 2px 4px rgba(0,0,0,0.5);
     }
 
@@ -562,7 +546,7 @@
       <div class="stations-rack">
         <div class="section-title">
           <span>STATIONS & VOL MIXER</span>
-          <span>TAP '+' TO LOAD FILE</span>
+          <span>TAP '+' TO LOAD</span>
         </div>
         <div class="stations-grid" id="stations-grid"></div>
       </div>
@@ -636,7 +620,8 @@
     </div>
   </div>
 
-  <input type="file" id="file-input" accept="audio/*">
+  <!-- תמיכה מפורשת ב-WAV ו-MP3 עבור Safari / iOS -->
+  <input type="file" id="file-input" accept="audio/mp3, audio/wav, audio/mpeg, audio/x-wav, .mp3, .wav">
 
   <script>
     let audioCtx = null;
@@ -716,7 +701,6 @@
     const needle = document.getElementById('needle');
     const stationsGrid = document.getElementById('stations-grid');
     const tuningPointer = document.getElementById('tuning-pointer');
-    const dropZone = document.getElementById('drop-zone');
 
     btnTheme.addEventListener('click', () => {
       document.body.classList.toggle('light-theme');
@@ -732,14 +716,13 @@
       }
     }
 
-    // פונקציית עזר לניהול גרירה ולחיצה על אלמנט
     function attachDragAndClick(element, onClickCallback) {
       let isDragging = false;
       let startX, startY;
       let hasMoved = false;
 
       element.addEventListener('pointerdown', (e) => {
-        if (e.target.tagName === 'INPUT') return; // לא להפריע לסליידר
+        if (e.target.tagName === 'INPUT') return;
         isDragging = true;
         hasMoved = false;
         startX = e.clientX;
@@ -751,7 +734,7 @@
         if (!isDragging) return;
         const dx = e.clientX - startX;
         const dy = e.clientY - startY;
-        if (Math.abs(dx) > 5 || Math.abs(dy) > 5) {
+        if (Math.abs(dx) > 6 || Math.abs(dy) > 6) {
           hasMoved = true;
         }
       });
@@ -795,24 +778,6 @@
           updateTuningPointer(idx);
           updateStationsAudioState();
           renderStationsUI();
-        });
-
-        // תמיכה בגרירת קבצים ישירות למחשב
-        card.addEventListener('dragover', (e) => {
-          e.preventDefault();
-          card.classList.add('drag-over');
-        });
-
-        card.addEventListener('dragleave', () => {
-          card.classList.remove('drag-over');
-        });
-
-        card.addEventListener('drop', (e) => {
-          e.preventDefault();
-          card.classList.remove('drag-over');
-          if (e.dataTransfer.files.length) {
-            loadFileToStation(e.dataTransfer.files[0], idx);
-          }
         });
 
         const slider = document.createElement('input');
@@ -953,10 +918,10 @@
       });
 
       if (activeStations.length === 0) {
-        setStatusText("TAP '+' TO CHOOSE A FILE OR PRESS BBC", true);
+        setStatusText("TAP '+' TO CHOOSE MP3/WAV", true);
       } else if (activeStations.length === 1) {
         if (!activeStations[0].buffer) {
-          setStatusText("TAP '+' TO CHOOSE A FILE OR PRESS BBC", true);
+          setStatusText("TAP '+' TO CHOOSE MP3/WAV", true);
         } else {
           setStatusText(`TUNED: ${activeStations[0].name}`);
         }
@@ -981,6 +946,8 @@
 
     async function loadFileToStation(file, stationIndex) {
       initAudioGraph();
+      if (audioCtx.state === 'suspended') await audioCtx.resume();
+      
       setStatusText(`DECODING ${file.name.substring(0, 10)}...`);
 
       try {
@@ -1000,7 +967,7 @@
         }
         setStatusText(`LOADED: ${file.name.substring(0, 14)}`);
       } catch (err) {
-        setStatusText("ERROR LOADING FILE");
+        setStatusText("ERROR DECODING WAV/MP3");
       }
     }
 
@@ -1103,7 +1070,6 @@
       needle.style.transform = `rotate(${degrees}deg)`;
     }
 
-    // חיבור כפתורי השליטה עם זיהוי נכון בין גרירה ללחיצה
     attachDragAndClick(btnPower, async () => {
       initAudioGraph();
       if (audioCtx.state === 'suspended') await audioCtx.resume();
