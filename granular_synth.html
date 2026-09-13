@@ -2,8 +2,8 @@
 <html lang="en" dir="ltr">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Modular Granular Synth - Envelope Edition</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Modular Granular Synth - iOS Touch Lock Fixed</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <style>
     :root {
@@ -21,6 +21,11 @@
     * {
       box-sizing: border-box;
       -webkit-tap-highlight-color: transparent;
+      -webkit-touch-callout: none;
+    }
+    html, body {
+      overscroll-behavior-y: none;
+      -webkit-overflow-scrolling: touch;
     }
     body {
       background-color: var(--bg);
@@ -32,9 +37,9 @@
       padding: 12px;
       margin: 0;
       user-select: none;
+      -webkit-user-select: none;
       width: 100vw;
       overflow-x: hidden;
-      touch-action: pan-y;
     }
     h2 {
       margin: 5px 0 12px 0;
@@ -54,6 +59,7 @@
       box-shadow: var(--shadow);
       height: 180px;
       position: relative;
+      touch-action: none;
     }
     #canvas3d {
       width: 100%;
@@ -132,6 +138,7 @@
       width: 38px;
       height: 110px;
       justify-content: space-between;
+      touch-action: none;
     }
     .v-slider-container label {
       font-size: 0.6rem;
@@ -158,21 +165,21 @@
     input[type=range] {
       -webkit-appearance: none;
       width: 70px;
-      height: 4px;
+      height: 12px;
       background: #e5e5ea;
-      border-radius: 2px;
+      border-radius: 6px;
       outline: none;
       cursor: pointer;
       touch-action: none;
     }
     input[type=range]::-webkit-slider-thumb {
       -webkit-appearance: none;
-      width: 16px;
-      height: 16px;
+      width: 22px;
+      height: 22px;
       border-radius: 50%;
       background: var(--accent);
       cursor: pointer;
-      box-shadow: 0 2px 6px rgba(0,122,255,0.3);
+      box-shadow: 0 2px 6px rgba(0,122,255,0.4);
     }
     .btn {
       background: #e5e5ea;
@@ -305,6 +312,21 @@
   </div>
 
   <script>
+    // iOS Safari Touch Scroll Prevention on Sliders
+    function lockTouchScrollOnSliders(container) {
+      const targets = container ? container.querySelectorAll('input[type=range], .slider-wrapper, .v-slider-container') : document.querySelectorAll('input[type=range], .slider-wrapper, .v-slider-container');
+      targets.forEach(el => {
+        if (!el.dataset.touchLocked) {
+          el.dataset.touchLocked = 'true';
+          el.addEventListener('touchstart', (e) => { e.stopPropagation(); }, { passive: true });
+          el.addEventListener('touchmove', (e) => {
+            if (e.cancelable) e.preventDefault();
+            e.stopPropagation();
+          }, { passive: false });
+        }
+      });
+    }
+
     let audioCtx = null;
     let isPlaying = false;
     let masterGain, analyser, globalReverbNode;
@@ -529,6 +551,7 @@
           </div>
         `;
         document.getElementById('channelsContainer').appendChild(div);
+        lockTouchScrollOnSliders(div);
       }
 
       bindEvents() {
@@ -674,6 +697,7 @@
 
     // Initialize first channel
     addChannel();
+    lockTouchScrollOnSliders();
 
     // Global Power Button
     powerBtn.addEventListener('click', () => {
