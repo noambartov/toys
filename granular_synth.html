@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>Modular Granular Synth - iOS Touch Lock Fixed</title>
+  <title>Modular Granular Synth - iPad Buttons & Touch Fixed</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <style>
     :root {
@@ -198,6 +198,7 @@
       width: 100%;
       box-sizing: border-box;
       transition: all 0.2s;
+      touch-action: manipulation;
     }
     .btn-bbc {
       background: var(--accent-orange);
@@ -312,9 +313,12 @@
   </div>
 
   <script>
-    // iOS Safari Touch Scroll Prevention on Sliders
+    // Fix: Targeted touch lock on range inputs only (preventing button touch blocks)
     function lockTouchScrollOnSliders(container) {
-      const targets = container ? container.querySelectorAll('input[type=range], .slider-wrapper, .v-slider-container') : document.querySelectorAll('input[type=range], .slider-wrapper, .v-slider-container');
+      const targets = container 
+        ? container.querySelectorAll('input[type=range], .slider-wrapper') 
+        : document.querySelectorAll('input[type=range], .slider-wrapper');
+      
       targets.forEach(el => {
         if (!el.dataset.touchLocked) {
           el.dataset.touchLocked = 'true';
@@ -429,7 +433,7 @@
         div.innerHTML = `
           <div class="channel-header">
             <span>Texture Channel #${this.id}</span>
-            <button class="btn btn-delete" onclick="removeChannel(${this.id})">Remove</button>
+            <button class="btn btn-delete">Remove</button>
           </div>
           <div class="channel-rack">
             
@@ -557,10 +561,21 @@
       bindEvents() {
         const root = document.getElementById(`channel-${this.id}`);
         const loadBtn = root.querySelector('.btn-load');
+        const deleteBtn = root.querySelector('.btn-delete');
         const fileInput = root.querySelector('.file-input');
         const status = root.querySelector('.sample-status');
 
-        loadBtn.addEventListener('click', () => fileInput.click());
+        const triggerLoad = (e) => {
+          e.preventDefault();
+          fileInput.click();
+        };
+        loadBtn.addEventListener('click', triggerLoad);
+
+        const triggerDelete = (e) => {
+          e.preventDefault();
+          removeChannel(this.id);
+        };
+        deleteBtn.addEventListener('click', triggerDelete);
 
         fileInput.addEventListener('change', (e) => {
           const file = e.target.files[0];
@@ -699,8 +714,9 @@
     addChannel();
     lockTouchScrollOnSliders();
 
-    // Global Power Button
-    powerBtn.addEventListener('click', () => {
+    // Toggle Power Handler with iPad Touch Event Support
+    const togglePower = (e) => {
+      if (e) e.preventDefault();
       if (!audioCtx) initAudio();
       if (audioCtx.state === 'suspended') audioCtx.resume();
 
@@ -714,7 +730,9 @@
         powerBtn.innerText = 'Start';
         channels.forEach(ch => ch.stop());
       }
-    });
+    };
+
+    powerBtn.addEventListener('click', togglePower);
 
     // Master Controls Listeners
     masterVol.addEventListener('input', (e) => {
@@ -724,7 +742,12 @@
     globalRadius.addEventListener('input', (e) => radiusVal.innerText = parseFloat(e.target.value).toFixed(1) + 'x');
     globalSpeed.addEventListener('input', (e) => speedVal.innerText = parseFloat(e.target.value).toFixed(1) + 'x');
     globalDensity.addEventListener('input', (e) => densityVal.innerText = parseFloat(e.target.value).toFixed(1) + 'x');
-    addChannelBtn.addEventListener('click', () => addChannel());
+
+    const handleAddChannel = (e) => {
+      if (e) e.preventDefault();
+      addChannel();
+    };
+    addChannelBtn.addEventListener('click', handleAddChannel);
 
     // 3D Render Loop
     function animate3D() {
