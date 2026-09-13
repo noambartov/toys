@@ -1,0 +1,749 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Modular Granular Synth - Envelope Edition</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <style>
+    :root {
+      --bg: #f4f6f9;
+      --panel: #ffffff;
+      --accent: #007aff;
+      --accent-green: #34c759;
+      --accent-orange: #ff9500;
+      --accent-purple: #af52de;
+      --border: #e5e5ea;
+      --text: #1c1c1e;
+      --text-muted: #8e8e93;
+      --shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+    }
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 12px;
+      margin: 0;
+      user-select: none;
+      width: 100vw;
+      overflow-x: hidden;
+      touch-action: pan-y;
+    }
+    h2 {
+      margin: 5px 0 12px 0;
+      font-weight: 600;
+      letter-spacing: -0.5px;
+      color: var(--text);
+      font-size: 1.1rem;
+      text-align: center;
+    }
+    .oscilloscope-container {
+      width: 100%;
+      max-width: 960px;
+      background: #000;
+      border-radius: 16px;
+      margin-bottom: 16px;
+      overflow: hidden;
+      box-shadow: var(--shadow);
+      height: 180px;
+      position: relative;
+    }
+    #canvas3d {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+    .main-container {
+      width: 100%;
+      max-width: 960px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .master-rack, .channel-rack {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      width: 100%;
+    }
+    .channel-block {
+      background: rgba(255,255,255,0.6);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 12px;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      box-shadow: var(--shadow);
+    }
+    .channel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-weight: 700;
+      font-size: 0.85rem;
+      color: var(--accent);
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 6px;
+    }
+    .module {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 10px 8px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      box-shadow: var(--shadow);
+      flex: 1;
+      min-width: 120px;
+    }
+    .module-title {
+      font-size: 0.7rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      border-bottom: 1px solid var(--border);
+      width: 100%;
+      text-align: center;
+      padding-bottom: 4px;
+    }
+    .controls-row {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+    }
+    .v-slider-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 38px;
+      height: 110px;
+      justify-content: space-between;
+    }
+    .v-slider-container label {
+      font-size: 0.6rem;
+      color: var(--text);
+      text-align: center;
+      white-space: nowrap;
+    }
+    .v-slider-container span {
+      font-size: 0.6rem;
+      color: var(--accent);
+      font-family: monospace;
+      font-weight: 600;
+    }
+    .slider-wrapper {
+      width: 70px;
+      height: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transform: rotate(-90deg);
+      margin: 20px 0;
+      touch-action: none;
+    }
+    input[type=range] {
+      -webkit-appearance: none;
+      width: 70px;
+      height: 4px;
+      background: #e5e5ea;
+      border-radius: 2px;
+      outline: none;
+      cursor: pointer;
+      touch-action: none;
+    }
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: var(--accent);
+      cursor: pointer;
+      box-shadow: 0 2px 6px rgba(0,122,255,0.3);
+    }
+    .btn {
+      background: #e5e5ea;
+      border: none;
+      color: var(--text);
+      padding: 6px 10px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-align: center;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      box-sizing: border-box;
+      transition: all 0.2s;
+    }
+    .btn-bbc {
+      background: var(--accent-orange);
+      color: #fff;
+      margin-bottom: 6px;
+    }
+    .btn-add {
+      background: var(--accent-green);
+      color: #fff;
+      padding: 10px;
+      font-size: 0.85rem;
+      margin-top: 10px;
+    }
+    .btn-delete {
+      background: #ff3b30;
+      color: #fff;
+      width: auto;
+      padding: 2px 8px;
+      font-size: 0.65rem;
+    }
+    .btn.active {
+      background: var(--accent);
+      color: #fff;
+    }
+    select {
+      background: #f2f2f7;
+      color: var(--text);
+      border: 1px solid var(--border);
+      padding: 5px;
+      border-radius: 6px;
+      font-size: 0.65rem;
+      outline: none;
+      width: 100%;
+      margin-bottom: 6px;
+    }
+    .file-input { display: none; }
+    .sample-status {
+      font-size: 0.58rem;
+      color: var(--accent-green);
+      margin-top: 2px;
+      text-align: center;
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+
+  <h2>Texture Granular Generator - ADSR Envelope</h2>
+
+  <div class="oscilloscope-container">
+    <div id="canvas3d"></div>
+  </div>
+
+  <div class="main-container">
+    
+    <!-- MASTER CONTROLS -->
+    <div class="master-rack">
+      <div class="module">
+        <div class="module-title">Master Power</div>
+        <div class="controls-row">
+          <div class="v-slider-container">
+            <label>Power</label>
+            <button id="powerBtn" class="btn">Start</button>
+            <span></span>
+          </div>
+          <div class="v-slider-container">
+            <label>Volume</label>
+            <div class="slider-wrapper">
+              <input type="range" id="masterVol" min="0" max="1" step="0.01" value="0.7">
+            </div>
+            <span id="masterVolVal">70%</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- GLOBAL GRANULAR SPHERE MODULE -->
+      <div class="module" style="border: 1px solid var(--accent)">
+        <div class="module-title" style="color:var(--accent)">Master Granular</div>
+        <div class="controls-row">
+          <div class="v-slider-container">
+            <label>Radius</label>
+            <div class="slider-wrapper">
+              <input type="range" id="globalRadius" min="0.2" max="2.5" step="0.05" value="1.0">
+            </div>
+            <span id="radiusVal">1.0x</span>
+          </div>
+          <div class="v-slider-container">
+            <label>Speed</label>
+            <div class="slider-wrapper">
+              <input type="range" id="globalSpeed" min="0.1" max="3" step="0.1" value="1.0">
+            </div>
+            <span id="speedVal">1.0x</span>
+          </div>
+          <div class="v-slider-container">
+            <label>Density</label>
+            <div class="slider-wrapper">
+              <input type="range" id="globalDensity" min="0.2" max="2" step="0.1" value="1.0">
+            </div>
+            <span id="densityVal">1.0x</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ENGINE CHANNELS CONTAINER -->
+    <div id="channelsContainer" style="display:flex; flex-direction:column; gap:16px;">
+      <!-- Channels generated dynamically -->
+    </div>
+
+    <button id="addChannelBtn" class="btn btn-add">➕ Add Texture Channel</button>
+
+  </div>
+
+  <script>
+    let audioCtx = null;
+    let isPlaying = false;
+    let masterGain, analyser, globalReverbNode;
+    let channels = [];
+    let channelIdCounter = 0;
+
+    // Three.js 3D Setup
+    const container = document.getElementById('canvas3d');
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 1000);
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    
+    renderer.setSize(container.clientWidth, container.clientHeight);
+    container.appendChild(renderer.domElement);
+    camera.position.z = 5;
+
+    // 3D Sphere Wireframe
+    const sphereGeo = new THREE.SphereGeometry(1.5, 16, 16);
+    const sphereMat = new THREE.MeshBasicMaterial({ color: 0x007aff, wireframe: true, transparent: true, opacity: 0.25 });
+    const sphereMesh = new THREE.Mesh(sphereGeo, sphereMat);
+    scene.add(sphereMesh);
+
+    // 3D Particles
+    const particleCount = 200;
+    const particlesGeo = new THREE.BufferGeometry();
+    const particlePositions = new Float32Array(particleCount * 3);
+    const particleVelocities = [];
+
+    for (let i = 0; i < particleCount; i++) {
+      const u = Math.random();
+      const v = Math.random();
+      const theta = u * 2.0 * Math.PI;
+      const phi = Math.acos(2.0 * v - 1.0);
+      const r = Math.cbrt(Math.random()) * 1.2;
+
+      particlePositions[i * 3] = r * Math.sin(phi) * Math.cos(theta);
+      particlePositions[i * 3 + 1] = r * Math.sin(phi) * Math.sin(theta);
+      particlePositions[i * 3 + 2] = r * Math.cos(phi);
+
+      particleVelocities.push({
+        x: (Math.random() - 0.5) * 0.01,
+        y: (Math.random() - 0.5) * 0.01,
+        z: (Math.random() - 0.5) * 0.01
+      });
+    }
+
+    particlesGeo.setAttribute('position', new THREE.BufferAttribute(particlePositions, 3));
+    const particleMat = new THREE.PointsMaterial({ color: 0x00f0ff, size: 0.06, transparent: true, opacity: 0.8 });
+    const particleSystem = new THREE.Points(particlesGeo, particleMat);
+    scene.add(particleSystem);
+
+    // Master Controls UI
+    const powerBtn = document.getElementById('powerBtn');
+    const masterVol = document.getElementById('masterVol');
+    const masterVolVal = document.getElementById('masterVolVal');
+    const globalRadius = document.getElementById('globalRadius');
+    const radiusVal = document.getElementById('radiusVal');
+    const globalSpeed = document.getElementById('globalSpeed');
+    const speedVal = document.getElementById('speedVal');
+    const globalDensity = document.getElementById('globalDensity');
+    const densityVal = document.getElementById('densityVal');
+    const addChannelBtn = document.getElementById('addChannelBtn');
+
+    function initAudio() {
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      masterGain = audioCtx.createGain();
+      masterGain.gain.value = parseFloat(masterVol.value);
+
+      analyser = audioCtx.createAnalyser();
+      analyser.fftSize = 128;
+
+      // Global Reverb / Delay Bus
+      globalReverbNode = audioCtx.createDelay();
+      globalReverbNode.delayTime.value = 0.15;
+      let reverbFeedback = audioCtx.createGain();
+      reverbFeedback.gain.value = 0.5;
+      
+      globalReverbNode.connect(reverbFeedback);
+      reverbFeedback.connect(globalReverbNode);
+      globalReverbNode.connect(masterGain);
+
+      masterGain.connect(analyser);
+      analyser.connect(audioCtx.destination);
+    }
+
+    // Engine Channel Class
+    class EngineChannel {
+      constructor(id) {
+        this.id = id;
+        this.loadedAudioBuffer = null;
+        this.timer = null;
+        this.renderUI();
+        this.bindEvents();
+      }
+
+      renderUI() {
+        const div = document.createElement('div');
+        div.className = 'channel-block';
+        div.id = `channel-${this.id}`;
+        div.innerHTML = `
+          <div class="channel-header">
+            <span>Texture Channel #${this.id}</span>
+            <button class="btn btn-delete" onclick="removeChannel(${this.id})">Remove</button>
+          </div>
+          <div class="channel-rack">
+            
+            <div class="module">
+              <div class="module-title">Volume</div>
+              <div class="controls-row">
+                <div class="v-slider-container">
+                  <label>Gain</label>
+                  <div class="slider-wrapper">
+                    <input type="range" class="ch-vol" min="0" max="1" step="0.01" value="0.8">
+                  </div>
+                  <span class="ch-vol-val">80%</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="module" style="border: 1px solid var(--accent-orange)">
+              <div class="module-title" style="color: var(--accent-orange)">Sample / Osc</div>
+              <a href="https://sound-effects.bbcrewind.co.uk/" target="_blank" class="btn btn-bbc">🌐 BBC Sound Library</a>
+              <button class="btn btn-load">📂 Load Sample</button>
+              <input type="file" class="file-input" accept="audio/*">
+              <div class="sample-status">Source: Waveform</div>
+              <select class="wave-type" style="margin-top:5px;">
+                <option value="sine">Sine</option>
+                <option value="sawtooth" selected>Saw</option>
+                <option value="square">Square</option>
+                <option value="triangle">Triangle</option>
+              </select>
+            </div>
+
+            <!-- ENVELOPE (ADSR) MODULE -->
+            <div class="module" style="border: 1px solid var(--accent-purple)">
+              <div class="module-title" style="color: var(--accent-purple)">Envelope</div>
+              <div class="controls-row">
+                <div class="v-slider-container">
+                  <label>Attack</label>
+                  <div class="slider-wrapper">
+                    <input type="range" class="env-attack" min="0.01" max="1" step="0.01" value="0.2">
+                  </div>
+                  <span class="env-attack-val">20%</span>
+                </div>
+                <div class="v-slider-container">
+                  <label>Decay</label>
+                  <div class="slider-wrapper">
+                    <input type="range" class="env-decay" min="0.01" max="1" step="0.01" value="0.5">
+                  </div>
+                  <span class="env-decay-val">50%</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="module">
+              <div class="module-title">Filter</div>
+              <div class="controls-row">
+                <div class="v-slider-container">
+                  <label>Cutoff</label>
+                  <div class="slider-wrapper">
+                    <input type="range" class="cutoff" min="100" max="8000" step="10" value="3000">
+                  </div>
+                  <span class="cutoff-val">3.0k</span>
+                </div>
+                <div class="v-slider-container">
+                  <label>Resonance</label>
+                  <div class="slider-wrapper">
+                    <input type="range" class="res" min="0" max="20" step="0.1" value="1">
+                  </div>
+                  <span class="res-val">1.0</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="module">
+              <div class="module-title" style="color:var(--accent)">Granulator</div>
+              <div class="controls-row">
+                <div class="v-slider-container">
+                  <label>Size</label>
+                  <div class="slider-wrapper">
+                    <input type="range" class="g-size" min="0.01" max="0.3" step="0.005" value="0.05">
+                  </div>
+                  <span class="g-size-val">50ms</span>
+                </div>
+                <div class="v-slider-container">
+                  <label>Interval</label>
+                  <div class="slider-wrapper">
+                    <input type="range" class="g-dist" min="0.005" max="0.2" step="0.005" value="0.03">
+                  </div>
+                  <span class="g-dist-val">30ms</span>
+                </div>
+                <div class="v-slider-container">
+                  <label>Pitch</label>
+                  <div class="slider-wrapper">
+                    <input type="range" class="pitch" min="-12" max="12" step="1" value="0">
+                  </div>
+                  <span class="pitch-val">0st</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="module">
+              <div class="module-title">Effects</div>
+              <div class="controls-row">
+                <div class="v-slider-container">
+                  <label>Scatter</label>
+                  <div class="slider-wrapper">
+                    <input type="range" class="scatter" min="0" max="1" step="0.01" value="0.5">
+                  </div>
+                  <span class="scatter-val">50%</span>
+                </div>
+                <div class="v-slider-container">
+                  <label>Reverb</label>
+                  <div class="slider-wrapper">
+                    <input type="range" class="reverb" min="0" max="1" step="0.01" value="0.3">
+                  </div>
+                  <span class="reverb-val">30%</span>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        `;
+        document.getElementById('channelsContainer').appendChild(div);
+      }
+
+      bindEvents() {
+        const root = document.getElementById(`channel-${this.id}`);
+        const loadBtn = root.querySelector('.btn-load');
+        const fileInput = root.querySelector('.file-input');
+        const status = root.querySelector('.sample-status');
+
+        loadBtn.addEventListener('click', () => fileInput.click());
+
+        fileInput.addEventListener('change', (e) => {
+          const file = e.target.files[0];
+          if (!file) return;
+          if (!audioCtx) initAudio();
+
+          const reader = new FileReader();
+          reader.onload = (evt) => {
+            audioCtx.decodeAudioData(evt.target.result, (buf) => {
+              this.loadedAudioBuffer = buf;
+              status.innerText = 'Sample: ' + file.name.substring(0, 12) + '...';
+            });
+          };
+          reader.readAsArrayBuffer(file);
+        });
+
+        root.querySelector('.ch-vol').addEventListener('input', (e) => root.querySelector('.ch-vol-val').innerText = Math.round(e.target.value * 100) + '%');
+        root.querySelector('.env-attack').addEventListener('input', (e) => root.querySelector('.env-attack-val').innerText = Math.round(e.target.value * 100) + '%');
+        root.querySelector('.env-decay').addEventListener('input', (e) => root.querySelector('.env-decay-val').innerText = Math.round(e.target.value * 100) + '%');
+        root.querySelector('.cutoff').addEventListener('input', (e) => root.querySelector('.cutoff-val').innerText = (e.target.value / 1000).toFixed(1) + 'k');
+        root.querySelector('.res').addEventListener('input', (e) => root.querySelector('.res-val').innerText = parseFloat(e.target.value).toFixed(1));
+        root.querySelector('.g-size').addEventListener('input', (e) => root.querySelector('.g-size-val').innerText = Math.round(e.target.value * 1000) + 'ms');
+        root.querySelector('.g-dist').addEventListener('input', (e) => root.querySelector('.g-dist-val').innerText = Math.round(e.target.value * 1000) + 'ms');
+        root.querySelector('.pitch').addEventListener('input', (e) => root.querySelector('.pitch-val').innerText = (e.target.value > 0 ? '+' : '') + e.target.value + 'st');
+        root.querySelector('.scatter').addEventListener('input', (e) => root.querySelector('.scatter-val').innerText = Math.round(e.target.value * 100) + '%');
+        root.querySelector('.reverb').addEventListener('input', (e) => root.querySelector('.reverb-val').innerText = Math.round(e.target.value * 100) + '%');
+      }
+
+      triggerGrain() {
+        if (!isPlaying || !audioCtx) return;
+
+        const root = document.getElementById(`channel-${this.id}`);
+        if (!root) return;
+
+        const chVol = parseFloat(root.querySelector('.ch-vol').value);
+        const waveType = root.querySelector('.wave-type').value;
+        const attackPct = parseFloat(root.querySelector('.env-attack').value);
+        const decayPct = parseFloat(root.querySelector('.env-decay').value);
+        const cutoff = parseFloat(root.querySelector('.cutoff').value);
+        const res = parseFloat(root.querySelector('.res').value);
+        const size = parseFloat(root.querySelector('.g-size').value);
+        const dist = parseFloat(root.querySelector('.g-dist').value);
+        const pitch = parseFloat(root.querySelector('.pitch').value);
+        const scatter = parseFloat(root.querySelector('.scatter').value);
+        const reverb = parseFloat(root.querySelector('.reverb').value);
+
+        const now = audioCtx.currentTime;
+        
+        const grainGain = audioCtx.createGain();
+        const chGainNode = audioCtx.createGain();
+        chGainNode.gain.value = chVol;
+
+        const filter = audioCtx.createBiquadFilter();
+        filter.type = 'lowpass';
+        filter.frequency.value = cutoff;
+        filter.Q.value = res;
+
+        const panner = audioCtx.createStereoPanner ? audioCtx.createStereoPanner() : null;
+        if (panner) {
+          const panValue = (Math.random() * 2 - 1) * scatter;
+          panner.pan.setValueAtTime(panValue, now);
+        }
+
+        const playbackRate = Math.pow(2, pitch / 12);
+        let src;
+
+        if (this.loadedAudioBuffer) {
+          src = audioCtx.createBufferSource();
+          src.buffer = this.loadedAudioBuffer;
+          src.playbackRate.value = playbackRate;
+          const start = Math.random() * Math.max(0, this.loadedAudioBuffer.duration - size);
+          src.start(now, start, size);
+        } else {
+          src = audioCtx.createOscillator();
+          src.type = waveType;
+          src.frequency.value = 220 * playbackRate;
+          src.start(now);
+          src.stop(now + size);
+        }
+
+        // Apply Envelope ADSR timings relative to Grain Size
+        const attackTime = size * attackPct * 0.8;
+        const releaseTime = size * (1 - decayPct * 0.8);
+
+        grainGain.gain.setValueAtTime(0, now);
+        grainGain.gain.linearRampToValueAtTime(1, now + attackTime);
+        grainGain.gain.linearRampToValueAtTime(0, now + Math.max(attackTime + 0.001, releaseTime));
+
+        src.connect(grainGain);
+
+        if (panner) {
+          grainGain.connect(panner);
+          panner.connect(filter);
+        } else {
+          grainGain.connect(filter);
+        }
+
+        filter.connect(chGainNode);
+        chGainNode.connect(masterGain);
+
+        if (reverb > 0 && globalReverbNode) {
+          const revSendGain = audioCtx.createGain();
+          revSendGain.gain.value = reverb;
+          chGainNode.connect(revSendGain);
+          revSendGain.connect(globalReverbNode);
+        }
+
+        const densityFactor = parseFloat(globalDensity.value);
+        const nextInterval = (dist * 1000) / densityFactor;
+
+        this.timer = setTimeout(() => this.triggerGrain(), Math.max(5, nextInterval));
+      }
+
+      stop() {
+        clearTimeout(this.timer);
+      }
+    }
+
+    function addChannel() {
+      channelIdCounter++;
+      const ch = new EngineChannel(channelIdCounter);
+      channels.push(ch);
+      if (isPlaying) ch.triggerGrain();
+    }
+
+    function removeChannel(id) {
+      const idx = channels.findIndex(c => c.id === id);
+      if (idx !== -1) {
+        channels[idx].stop();
+        document.getElementById(`channel-${id}`).remove();
+        channels.splice(idx, 1);
+      }
+    }
+
+    // Initialize first channel
+    addChannel();
+
+    // Global Power Button
+    powerBtn.addEventListener('click', () => {
+      if (!audioCtx) initAudio();
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+
+      isPlaying = !isPlaying;
+      if (isPlaying) {
+        powerBtn.classList.add('active');
+        powerBtn.innerText = 'Active';
+        channels.forEach(ch => ch.triggerGrain());
+      } else {
+        powerBtn.classList.remove('active');
+        powerBtn.innerText = 'Start';
+        channels.forEach(ch => ch.stop());
+      }
+    });
+
+    // Master Controls Listeners
+    masterVol.addEventListener('input', (e) => {
+      if (masterGain) masterGain.gain.value = e.target.value;
+      masterVolVal.innerText = Math.round(e.target.value * 100) + '%';
+    });
+    globalRadius.addEventListener('input', (e) => radiusVal.innerText = parseFloat(e.target.value).toFixed(1) + 'x');
+    globalSpeed.addEventListener('input', (e) => speedVal.innerText = parseFloat(e.target.value).toFixed(1) + 'x');
+    globalDensity.addEventListener('input', (e) => densityVal.innerText = parseFloat(e.target.value).toFixed(1) + 'x');
+    addChannelBtn.addEventListener('click', () => addChannel());
+
+    // 3D Render Loop
+    function animate3D() {
+      requestAnimationFrame(animate3D);
+
+      const rad = parseFloat(globalRadius.value);
+      const spd = parseFloat(globalSpeed.value);
+
+      sphereMesh.scale.set(rad, rad, rad);
+      sphereMesh.rotation.y += 0.003 * spd;
+      sphereMesh.rotation.x += 0.001 * spd;
+
+      const positions = particlesGeo.attributes.position.array;
+
+      for (let i = 0; i < particleCount; i++) {
+        positions[i * 3] += particleVelocities[i].x * spd;
+        positions[i * 3 + 1] += particleVelocities[i].y * spd;
+        positions[i * 3 + 2] += particleVelocities[i].z * spd;
+
+        const dist = Math.sqrt(
+          positions[i * 3] ** 2 +
+          positions[i * 3 + 1] ** 2 +
+          positions[i * 3 + 2] ** 2
+        );
+
+        if (dist > 1.4 * rad) {
+          positions[i * 3] *= -0.8;
+          positions[i * 3 + 1] *= -0.8;
+          positions[i * 3 + 2] *= -0.8;
+        }
+      }
+
+      particlesGeo.attributes.position.needsUpdate = true;
+      renderer.render(scene, camera);
+    }
+
+    animate3D();
+
+    window.addEventListener('resize', () => {
+      camera.aspect = container.clientWidth / container.clientHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(container.clientWidth, container.clientHeight);
+    });
+  </script>
+</body>
+</html>
