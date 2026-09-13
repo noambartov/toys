@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>Modular Granular Synth - iPad Native Touch Fixed</title>
+  <title>Modular Granular Synth - iPad Touch Sliders Fixed</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <style>
     :root {
@@ -21,9 +21,7 @@
     * {
       box-sizing: border-box;
       -webkit-tap-highlight-color: transparent;
-    }
-    html, body {
-      overscroll-behavior-y: none;
+      touch-action: manipulation;
     }
     body {
       background-color: var(--bg);
@@ -146,23 +144,32 @@
       font-family: monospace;
       font-weight: 600;
     }
-    .slider-wrapper {
-      width: 100%;
+
+    /* CUSTOM TOUCH SLIDER */
+    .custom-slider-track {
+      width: 16px;
       height: 75px;
+      background: #e5e5ea;
+      border-radius: 8px;
+      position: relative;
+      touch-action: none;
+      cursor: pointer;
       display: flex;
-      align-items: center;
       justify-content: center;
     }
-    /* Native vertical range sliders for touch compatibility */
-    input[type=range] {
-      -webkit-appearance: slider-vertical;
-      writing-mode: vertical-lr;
-      direction: rtl;
+    .custom-slider-thumb {
       width: 24px;
-      height: 70px;
-      cursor: pointer;
-      touch-action: pan-y;
+      height: 24px;
+      background: var(--accent);
+      border-radius: 50%;
+      position: absolute;
+      left: 50%;
+      transform: translate(-50%, 50%);
+      bottom: 0%;
+      box-shadow: 0 2px 6px rgba(0,122,255,0.4);
+      pointer-events: none;
     }
+
     .btn {
       background: #e5e5ea;
       border: none;
@@ -180,7 +187,6 @@
       width: 100%;
       box-sizing: border-box;
       transition: background 0.1s;
-      touch-action: manipulation;
     }
     .btn-bbc {
       background: var(--accent-orange);
@@ -248,8 +254,8 @@
           </div>
           <div class="v-slider-container">
             <label>Volume</label>
-            <div class="slider-wrapper">
-              <input type="range" id="masterVol" min="0" max="1" step="0.01" value="0.7">
+            <div class="custom-slider-track" id="masterVol" data-min="0" data-max="1" data-step="0.01" data-value="0.7">
+              <div class="custom-slider-thumb"></div>
             </div>
             <span id="masterVolVal">70%</span>
           </div>
@@ -262,22 +268,22 @@
         <div class="controls-row">
           <div class="v-slider-container">
             <label>Radius</label>
-            <div class="slider-wrapper">
-              <input type="range" id="globalRadius" min="0.2" max="2.5" step="0.05" value="1.0">
+            <div class="custom-slider-track" id="globalRadius" data-min="0.2" data-max="2.5" data-step="0.05" data-value="1.0">
+              <div class="custom-slider-thumb"></div>
             </div>
             <span id="radiusVal">1.0x</span>
           </div>
           <div class="v-slider-container">
             <label>Speed</label>
-            <div class="slider-wrapper">
-              <input type="range" id="globalSpeed" min="0.1" max="3" step="0.1" value="1.0">
+            <div class="custom-slider-track" id="globalSpeed" data-min="0.1" data-max="3" data-step="0.1" data-value="1.0">
+              <div class="custom-slider-thumb"></div>
             </div>
             <span id="speedVal">1.0x</span>
           </div>
           <div class="v-slider-container">
             <label>Density</label>
-            <div class="slider-wrapper">
-              <input type="range" id="globalDensity" min="0.2" max="2" step="0.1" value="1.0">
+            <div class="custom-slider-track" id="globalDensity" data-min="0.2" data-max="2" data-step="0.1" data-value="1.0">
+              <div class="custom-slider-thumb"></div>
             </div>
             <span id="densityVal">1.0x</span>
           </div>
@@ -293,34 +299,85 @@
   </div>
 
   <script>
+    // Custom Touch-safe Slider Engine
+    function setupCustomSliders(container = document) {
+      const tracks = container.querySelectorAll('.custom-slider-track');
+      
+      tracks.forEach(track => {
+        if (track.dataset.initialized) return;
+        track.dataset.initialized = "true";
+
+        const thumb = track.querySelector('.custom-slider-thumb');
+        const min = parseFloat(track.dataset.min);
+        const max = parseFloat(track.dataset.max);
+        const step = parseFloat(track.dataset.step) || 0.01;
+
+        function updateSlider(clientY) {
+          const rect = track.getBoundingClientRect();
+          let offsetY = clientY - rect.top;
+          offsetY = Math.max(0, Math.min(rect.height, offsetY));
+          
+          let pct = 1 - (offsetY / rect.height);
+          let rawVal = min + pct * (max - min);
+          let steppedVal = Math.round(rawVal / step) * step;
+          steppedVal = Math.max(min, Math.min(max, steppedVal));
+
+          track.dataset.value = steppedVal;
+          const displayPct = ((steppedVal - min) / (max - min)) * 100;
+          thumb.style.bottom = `${displayPct}%`;
+
+          const event = new CustomEvent('slider-input', { detail: { value: steppedVal } });
+          track.dispatchEvent(event);
+        }
+
+        // Set initial position
+        const initialVal = parseFloat(track.dataset.value);
+        const initialPct = ((initialVal - min) / (max - min)) * 100;
+        thumb.style.bottom = `${initialPct}%`;
+
+        // Touch and Pointer Events
+        const onMove = (e) => {
+          const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+          updateSlider(clientY);
+          if (e.cancelable) e.preventDefault();
+        };
+
+        const onEnd = () => {
+          window.removeEventListener('pointermove', onMove);
+          window.removeEventListener('pointerup', onEnd);
+          window.removeEventListener('touchmove', onMove);
+          window.removeEventListener('touchend', onEnd);
+        };
+
+        const onStart = (e) => {
+          const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+          updateSlider(clientY);
+          
+          window.addEventListener('pointermove', onMove, { passive: false });
+          window.addEventListener('pointerup', onEnd);
+          window.addEventListener('touchmove', onMove, { passive: false });
+          window.addEventListener('touchend', onEnd);
+          if (e.cancelable) e.preventDefault();
+        };
+
+        track.addEventListener('pointerdown', onStart, { passive: false });
+        track.addEventListener('touchstart', onStart, { passive: false });
+      });
+    }
+
     let audioCtx = null;
     let isPlaying = false;
     let masterGain, analyser, globalReverbNode;
     let channels = [];
     let channelIdCounter = 0;
 
-    // Helper for iPad touch compatibility on buttons
-    function attachTouchHandler(element, handler) {
-      let triggered = false;
-      const execute = (e) => {
-        if (triggered) return;
-        triggered = true;
-        setTimeout(() => { triggered = false; }, 300);
-        handler(e);
-      };
-
-      element.addEventListener('pointerdown', execute, { passive: false });
-      element.addEventListener('click', execute);
-    }
-
-    // Initialize Audio Context on Touch
     function initAudio() {
       if (audioCtx) return;
       const AudioContextClass = window.AudioContext || window.webkitAudioContext;
       audioCtx = new AudioContextClass();
 
       masterGain = audioCtx.createGain();
-      masterGain.gain.value = parseFloat(masterVol.value);
+      masterGain.gain.value = parseFloat(masterVol.dataset.value);
 
       analyser = audioCtx.createAnalyser();
       analyser.fftSize = 128;
@@ -348,7 +405,6 @@
     container.appendChild(renderer.domElement);
     camera.position.z = 5;
 
-    // 3D Wireframe & Particles
     const sphereGeo = new THREE.SphereGeometry(1.5, 16, 16);
     const sphereMat = new THREE.MeshBasicMaterial({ color: 0x007aff, wireframe: true, transparent: true, opacity: 0.25 });
     const sphereMesh = new THREE.Mesh(sphereGeo, sphereMat);
@@ -382,7 +438,6 @@
     const particleSystem = new THREE.Points(particlesGeo, particleMat);
     scene.add(particleSystem);
 
-    // Master UI Elements
     const powerBtn = document.getElementById('powerBtn');
     const masterVol = document.getElementById('masterVol');
     const masterVolVal = document.getElementById('masterVolVal');
@@ -394,7 +449,6 @@
     const densityVal = document.getElementById('densityVal');
     const addChannelBtn = document.getElementById('addChannelBtn');
 
-    // Engine Channel Class
     class EngineChannel {
       constructor(id) {
         this.id = id;
@@ -420,8 +474,8 @@
               <div class="controls-row">
                 <div class="v-slider-container">
                   <label>Gain</label>
-                  <div class="slider-wrapper">
-                    <input type="range" class="ch-vol" min="0" max="1" step="0.01" value="0.8">
+                  <div class="custom-slider-track ch-vol" data-min="0" data-max="1" data-step="0.01" data-value="0.8">
+                    <div class="custom-slider-thumb"></div>
                   </div>
                   <span class="ch-vol-val">80%</span>
                 </div>
@@ -447,15 +501,15 @@
               <div class="controls-row">
                 <div class="v-slider-container">
                   <label>Attack</label>
-                  <div class="slider-wrapper">
-                    <input type="range" class="env-attack" min="0.01" max="1" step="0.01" value="0.2">
+                  <div class="custom-slider-track env-attack" data-min="0.01" data-max="1" data-step="0.01" data-value="0.2">
+                    <div class="custom-slider-thumb"></div>
                   </div>
                   <span class="env-attack-val">20%</span>
                 </div>
                 <div class="v-slider-container">
                   <label>Decay</label>
-                  <div class="slider-wrapper">
-                    <input type="range" class="env-decay" min="0.01" max="1" step="0.01" value="0.5">
+                  <div class="custom-slider-track env-decay" data-min="0.01" data-max="1" data-step="0.01" data-value="0.5">
+                    <div class="custom-slider-thumb"></div>
                   </div>
                   <span class="env-decay-val">50%</span>
                 </div>
@@ -467,15 +521,15 @@
               <div class="controls-row">
                 <div class="v-slider-container">
                   <label>Cutoff</label>
-                  <div class="slider-wrapper">
-                    <input type="range" class="cutoff" min="100" max="8000" step="10" value="3000">
+                  <div class="custom-slider-track cutoff" data-min="100" data-max="8000" data-step="10" data-value="3000">
+                    <div class="custom-slider-thumb"></div>
                   </div>
                   <span class="cutoff-val">3.0k</span>
                 </div>
                 <div class="v-slider-container">
                   <label>Resonance</label>
-                  <div class="slider-wrapper">
-                    <input type="range" class="res" min="0" max="20" step="0.1" value="1">
+                  <div class="custom-slider-track res" data-min="0" data-max="20" data-step="0.1" data-value="1">
+                    <div class="custom-slider-thumb"></div>
                   </div>
                   <span class="res-val">1.0</span>
                 </div>
@@ -487,22 +541,22 @@
               <div class="controls-row">
                 <div class="v-slider-container">
                   <label>Size</label>
-                  <div class="slider-wrapper">
-                    <input type="range" class="g-size" min="0.01" max="0.3" step="0.005" value="0.05">
+                  <div class="custom-slider-track g-size" data-min="0.01" data-max="0.3" data-step="0.005" data-value="0.05">
+                    <div class="custom-slider-thumb"></div>
                   </div>
                   <span class="g-size-val">50ms</span>
                 </div>
                 <div class="v-slider-container">
                   <label>Interval</label>
-                  <div class="slider-wrapper">
-                    <input type="range" class="g-dist" min="0.005" max="0.2" step="0.005" value="0.03">
+                  <div class="custom-slider-track g-dist" data-min="0.005" data-max="0.2" data-step="0.005" data-value="0.03">
+                    <div class="custom-slider-thumb"></div>
                   </div>
                   <span class="g-dist-val">30ms</span>
                 </div>
                 <div class="v-slider-container">
                   <label>Pitch</label>
-                  <div class="slider-wrapper">
-                    <input type="range" class="pitch" min="-12" max="12" step="1" value="0">
+                  <div class="custom-slider-track pitch" data-min="-12" data-max="12" data-step="1" data-value="0">
+                    <div class="custom-slider-thumb"></div>
                   </div>
                   <span class="pitch-val">0st</span>
                 </div>
@@ -514,15 +568,15 @@
               <div class="controls-row">
                 <div class="v-slider-container">
                   <label>Scatter</label>
-                  <div class="slider-wrapper">
-                    <input type="range" class="scatter" min="0" max="1" step="0.01" value="0.5">
+                  <div class="custom-slider-track scatter" data-min="0" data-max="1" data-step="0.01" data-value="0.5">
+                    <div class="custom-slider-thumb"></div>
                   </div>
                   <span class="scatter-val">50%</span>
                 </div>
                 <div class="v-slider-container">
                   <label>Reverb</label>
-                  <div class="slider-wrapper">
-                    <input type="range" class="reverb" min="0" max="1" step="0.01" value="0.3">
+                  <div class="custom-slider-track reverb" data-min="0" data-max="1" data-step="0.01" data-value="0.3">
+                    <div class="custom-slider-thumb"></div>
                   </div>
                   <span class="reverb-val">30%</span>
                 </div>
@@ -532,6 +586,7 @@
           </div>
         `;
         document.getElementById('channelsContainer').appendChild(div);
+        setupCustomSliders(div);
       }
 
       bindEvents() {
@@ -541,8 +596,8 @@
         const fileInput = root.querySelector('.file-input');
         const status = root.querySelector('.sample-status');
 
-        attachTouchHandler(loadBtn, () => fileInput.click());
-        attachTouchHandler(deleteBtn, () => removeChannel(this.id));
+        loadBtn.addEventListener('click', () => fileInput.click());
+        deleteBtn.addEventListener('click', () => removeChannel(this.id));
 
         fileInput.addEventListener('change', (e) => {
           const file = e.target.files[0];
@@ -559,16 +614,16 @@
           reader.readAsArrayBuffer(file);
         });
 
-        root.querySelector('.ch-vol').addEventListener('input', (e) => root.querySelector('.ch-vol-val').innerText = Math.round(e.target.value * 100) + '%');
-        root.querySelector('.env-attack').addEventListener('input', (e) => root.querySelector('.env-attack-val').innerText = Math.round(e.target.value * 100) + '%');
-        root.querySelector('.env-decay').addEventListener('input', (e) => root.querySelector('.env-decay-val').innerText = Math.round(e.target.value * 100) + '%');
-        root.querySelector('.cutoff').addEventListener('input', (e) => root.querySelector('.cutoff-val').innerText = (e.target.value / 1000).toFixed(1) + 'k');
-        root.querySelector('.res').addEventListener('input', (e) => root.querySelector('.res-val').innerText = parseFloat(e.target.value).toFixed(1));
-        root.querySelector('.g-size').addEventListener('input', (e) => root.querySelector('.g-size-val').innerText = Math.round(e.target.value * 1000) + 'ms');
-        root.querySelector('.g-dist').addEventListener('input', (e) => root.querySelector('.g-dist-val').innerText = Math.round(e.target.value * 1000) + 'ms');
-        root.querySelector('.pitch').addEventListener('input', (e) => root.querySelector('.pitch-val').innerText = (e.target.value > 0 ? '+' : '') + e.target.value + 'st');
-        root.querySelector('.scatter').addEventListener('input', (e) => root.querySelector('.scatter-val').innerText = Math.round(e.target.value * 100) + '%');
-        root.querySelector('.reverb').addEventListener('input', (e) => root.querySelector('.reverb-val').innerText = Math.round(e.target.value * 100) + '%');
+        root.querySelector('.ch-vol').addEventListener('slider-input', (e) => root.querySelector('.ch-vol-val').innerText = Math.round(e.detail.value * 100) + '%');
+        root.querySelector('.env-attack').addEventListener('slider-input', (e) => root.querySelector('.env-attack-val').innerText = Math.round(e.detail.value * 100) + '%');
+        root.querySelector('.env-decay').addEventListener('slider-input', (e) => root.querySelector('.env-decay-val').innerText = Math.round(e.detail.value * 100) + '%');
+        root.querySelector('.cutoff').addEventListener('slider-input', (e) => root.querySelector('.cutoff-val').innerText = (e.detail.value / 1000).toFixed(1) + 'k');
+        root.querySelector('.res').addEventListener('slider-input', (e) => root.querySelector('.res-val').innerText = parseFloat(e.detail.value).toFixed(1));
+        root.querySelector('.g-size').addEventListener('slider-input', (e) => root.querySelector('.g-size-val').innerText = Math.round(e.detail.value * 1000) + 'ms');
+        root.querySelector('.g-dist').addEventListener('slider-input', (e) => root.querySelector('.g-dist-val').innerText = Math.round(e.detail.value * 1000) + 'ms');
+        root.querySelector('.pitch').addEventListener('slider-input', (e) => root.querySelector('.pitch-val').innerText = (e.detail.value > 0 ? '+' : '') + e.detail.value + 'st');
+        root.querySelector('.scatter').addEventListener('slider-input', (e) => root.querySelector('.scatter-val').innerText = Math.round(e.detail.value * 100) + '%');
+        root.querySelector('.reverb').addEventListener('slider-input', (e) => root.querySelector('.reverb-val').innerText = Math.round(e.detail.value * 100) + '%');
       }
 
       triggerGrain() {
@@ -577,17 +632,17 @@
         const root = document.getElementById(`channel-${this.id}`);
         if (!root) return;
 
-        const chVol = parseFloat(root.querySelector('.ch-vol').value);
+        const chVol = parseFloat(root.querySelector('.ch-vol').dataset.value);
         const waveType = root.querySelector('.wave-type').value;
-        const attackPct = parseFloat(root.querySelector('.env-attack').value);
-        const decayPct = parseFloat(root.querySelector('.env-decay').value);
-        const cutoff = parseFloat(root.querySelector('.cutoff').value);
-        const res = parseFloat(root.querySelector('.res').value);
-        const size = parseFloat(root.querySelector('.g-size').value);
-        const dist = parseFloat(root.querySelector('.g-dist').value);
-        const pitch = parseFloat(root.querySelector('.pitch').value);
-        const scatter = parseFloat(root.querySelector('.scatter').value);
-        const reverb = parseFloat(root.querySelector('.reverb').value);
+        const attackPct = parseFloat(root.querySelector('.env-attack').dataset.value);
+        const decayPct = parseFloat(root.querySelector('.env-decay').dataset.value);
+        const cutoff = parseFloat(root.querySelector('.cutoff').dataset.value);
+        const res = parseFloat(root.querySelector('.res').dataset.value);
+        const size = parseFloat(root.querySelector('.g-size').dataset.value);
+        const dist = parseFloat(root.querySelector('.g-dist').dataset.value);
+        const pitch = parseFloat(root.querySelector('.pitch').dataset.value);
+        const scatter = parseFloat(root.querySelector('.scatter').dataset.value);
+        const reverb = parseFloat(root.querySelector('.reverb').dataset.value);
 
         const now = audioCtx.currentTime;
         
@@ -649,7 +704,7 @@
           revSendGain.connect(globalReverbNode);
         }
 
-        const densityFactor = parseFloat(globalDensity.value);
+        const densityFactor = parseFloat(globalDensity.dataset.value);
         const nextInterval = (dist * 1000) / densityFactor;
 
         this.timer = setTimeout(() => this.triggerGrain(), Math.max(5, nextInterval));
@@ -676,15 +731,12 @@
       }
     }
 
-    // Initialize first channel
     addChannel();
+    setupCustomSliders();
 
-    // Attach touch handler to Power Button
-    attachTouchHandler(powerBtn, () => {
+    powerBtn.addEventListener('click', () => {
       initAudio();
-      if (audioCtx.state === 'suspended') {
-        audioCtx.resume();
-      }
+      if (audioCtx.state === 'suspended') audioCtx.resume();
 
       isPlaying = !isPlaying;
       if (isPlaying) {
@@ -698,24 +750,21 @@
       }
     });
 
-    // Attach touch handler to Add Channel Button
-    attachTouchHandler(addChannelBtn, () => addChannel());
+    addChannelBtn.addEventListener('click', () => addChannel());
 
-    // Sliders event listeners
-    masterVol.addEventListener('input', (e) => {
-      if (masterGain) masterGain.gain.value = e.target.value;
-      masterVolVal.innerText = Math.round(e.target.value * 100) + '%';
+    masterVol.addEventListener('slider-input', (e) => {
+      if (masterGain) masterGain.gain.value = e.detail.value;
+      masterVolVal.innerText = Math.round(e.detail.value * 100) + '%';
     });
-    globalRadius.addEventListener('input', (e) => radiusVal.innerText = parseFloat(e.target.value).toFixed(1) + 'x');
-    globalSpeed.addEventListener('input', (e) => speedVal.innerText = parseFloat(e.target.value).toFixed(1) + 'x');
-    globalDensity.addEventListener('input', (e) => densityVal.innerText = parseFloat(e.target.value).toFixed(1) + 'x');
+    globalRadius.addEventListener('slider-input', (e) => radiusVal.innerText = parseFloat(e.detail.value).toFixed(1) + 'x');
+    globalSpeed.addEventListener('slider-input', (e) => speedVal.innerText = parseFloat(e.detail.value).toFixed(1) + 'x');
+    globalDensity.addEventListener('slider-input', (e) => densityVal.innerText = parseFloat(e.detail.value).toFixed(1) + 'x');
 
-    // 3D Render Loop
     function animate3D() {
       requestAnimationFrame(animate3D);
 
-      const rad = parseFloat(globalRadius.value);
-      const spd = parseFloat(globalSpeed.value);
+      const rad = parseFloat(globalRadius.dataset.value);
+      const spd = parseFloat(globalSpeed.dataset.value);
 
       sphereMesh.scale.set(rad, rad, rad);
       sphereMesh.rotation.y += 0.003 * spd;
