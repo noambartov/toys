@@ -1,662 +1,1394 @@
 <!DOCTYPE html>
-<html lang="he" dir="rtl">
+<html lang="he" dir="ltr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Audio Workstation Synth & FX</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>MODULARLAB - Infinite Canvas & DSP Synth</title>
     <style>
         :root {
-            --bg-color: #121212;
-            --panel-bg: #1e1e1e;
-            --accent-color: #00adb5;
-            --text-color: #ececec;
-            --card-color: #2a2a2a;
+            --bg-dark: #0b0c10;
+            --panel-bg: #13151c;
+            --sidebar-bg: #161822;
+            --border-color: #242836;
+            --accent-pink: #ff2a74;
+            --accent-cyan: #00f0ff;
+            --accent-yellow: #ffe600;
+            --accent-green: #00e676;
+            --accent-red: #ff3344;
+            --accent-purple: #af52de;
+            --text-main: #e0e6ed;
+            --text-muted: #626c80;
         }
 
-        * {
-            box-sizing: border-box;
+        html, body {
+            width: 100vw; height: 100vh;
+            overflow: hidden; 
+            touch-action: none;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
+            position: fixed; top: 0; left: 0;
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, monospace;
+            box-sizing: border-box; margin: 0; padding: 0;
+        }
+
+        body { display: flex; }
+
+        .sidebar {
+            width: 250px; min-width: 250px; background: var(--sidebar-bg);
+            border-right: 1px solid var(--border-color);
+            display: flex; flex-direction: column;
+            padding: 15px 12px; gap: 8px; z-index: 100; overflow-y: auto;
+            touch-action: pan-y;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .brand-logo { font-size: 18px; font-weight: 900; letter-spacing: 1.5px; color: #fff; margin-bottom: 5px; }
+        .brand-logo span { color: var(--accent-pink); }
+        .category-title { font-size: 9px; font-weight: 800; color: var(--text-muted); letter-spacing: 1px; text-transform: uppercase; margin-top: 6px; }
+
+        .spawn-btn {
+            background: #1c1f2b; border: 1px solid var(--border-color);
+            color: var(--text-main); padding: 8px 10px; border-radius: 6px;
+            font-size: 11px; font-weight: 600; text-align: left; cursor: pointer;
+            transition: all 0.15s ease;
             touch-action: manipulation;
         }
+        .spawn-btn:hover { border-color: var(--accent-cyan); color: var(--accent-cyan); background: #222636; }
 
-        body {
-            margin: 0;
-            padding: 0;
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            display: flex;
-            height: 100vh;
-            overflow: hidden;
+        #viewport {
+            flex: 1; position: relative; overflow: hidden;
+            background-color: var(--bg-dark); cursor: grab; touch-action: none;
+        }
+        #viewport.panning { cursor: grabbing; }
+
+        #world {
+            position: absolute; top: 0; left: 0; width: 0; height: 0;
+            transform-origin: 0 0;
         }
 
-        /* תיקון בעיית הגלילה באייפד/טאבלט - Padding בתחתית */
-        #sidebar {
-            width: 280px;
-            background-color: var(--panel-bg);
-            border-left: 2px solid #333;
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            padding: 15px;
-            padding-bottom: 90px; /* מקום ספייר למניעת הסתרת שורות אחרונות */
-            overflow-y: auto;
-            -webkit-overflow-scrolling: touch;
-            flex-shrink: 0;
+        .infinite-grid {
+            position: absolute; top: -50000px; left: -50000px;
+            width: 100000px; height: 100000px;
+            background-image: linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px), 
+                              linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+            background-size: 20px 20px; pointer-events: none;
         }
 
-        #main-content {
-            flex-grow: 1;
-            display: flex;
-            flex-direction: column;
-            padding: 15px;
-            overflow-y: auto;
-            gap: 15px;
+        .master-oscilloscope {
+            position: absolute; top: 12px; left: 50%; transform: translateX(-50%);
+            width: 380px; height: 48px; background: rgba(11, 12, 16, 0.85);
+            border: 1px solid var(--accent-cyan); border-radius: 6px;
+            box-shadow: 0 0 12px rgba(0, 240, 255, 0.15); z-index: 90; pointer-events: none;
         }
+        .scope-title { font-size: 8px; font-weight: 800; color: var(--accent-cyan); letter-spacing: 1px; padding: 3px 6px 0 6px; }
+        canvas#scopeCanvas { width: 100%; height: 30px; }
 
-        .header-controls {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background: var(--panel-bg);
-            padding: 10px 20px;
-            border-radius: 8px;
+        .preset-container {
+            position: absolute; top: 12px; right: 12px; display: flex;
+            flex-direction: column; gap: 5px; width: 130px; z-index: 90;
         }
+        .preset-btn {
+            background: var(--accent-cyan); color: #000; border: none;
+            padding: 5px 8px; border-radius: 4px; font-size: 10px; font-weight: 700; cursor: pointer;
+            touch-action: manipulation;
+        }
+        .preset-btn.danger { background: rgba(255, 51, 68, 0.15); color: var(--accent-red); border: 1px solid var(--accent-red); }
 
-        .btn {
-            background-color: #333;
-            color: #fff;
-            border: 1px solid #555;
-            padding: 8px 14px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 14px;
-            transition: all 0.2s;
+        .zoom-controls {
+            position: absolute; bottom: 12px; right: 12px; display: flex;
+            gap: 6px; z-index: 90; background: rgba(19,21,28,0.8); padding: 4px; border-radius: 6px; border: 1px solid var(--border-color);
         }
+        .zoom-btn { background: #1c1f2b; color: #fff; border: 1px solid var(--border-color); width: 26px; height: 26px; border-radius: 4px; font-weight: bold; cursor: pointer; touch-action: manipulation; }
+        .zoom-btn:hover { border-color: var(--accent-cyan); color: var(--accent-cyan); }
 
-        .btn:active, .btn.active {
-            background-color: var(--accent-color);
-            border-color: #fff;
+        #svgCanvas { 
+            position: absolute; top: -50000px; left: -50000px;
+            width: 100000px; height: 100000px;
+            pointer-events: none; z-index: 50; 
         }
+        
+        path.cable {
+            fill: none; stroke: var(--accent-yellow); stroke-width: 4;
+            stroke-linecap: round; filter: drop-shadow(0 2px 5px rgba(0,0,0,0.8));
+            pointer-events: stroke; cursor: pointer;
+        }
+        path.cable.dragging { pointer-events: none; }
+        path.cable:hover { stroke: var(--accent-red); stroke-width: 6; }
 
-        /* מודולים/תיבות */
-        .grid-container {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 15px;
+        /* סגנונות נושא לתיבות (Themes) */
+        .node {
+            position: absolute; background: var(--panel-bg); border: 1px solid var(--border-color);
+            border-radius: 8px; width: 270px; min-width: 200px; min-height: 140px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+            z-index: 10; display: flex; flex-direction: column; touch-action: none;
+            resize: both; overflow: hidden;
+            transition: background 0.3s, color 0.3s, border-color 0.3s, box-shadow 0.2s ease-out;
         }
+        .node.theme-light { background: #e8ecf2 !important; color: #111 !important; border-color: #a0aab8 !important; }
+        .node.theme-light .node-header { background: rgba(0,0,0,0.06) !important; color: #111 !important; border-bottom-color: #a0aab8 !important; }
+        .node.theme-light select, .node.theme-light input[type=number] { background: #fff !important; color: #111 !important; border-color: #ccc !important; }
+        
+        .node.theme-random { border-color: var(--accent-pink) !important; }
 
-        .module-card {
-            background-color: var(--card-color);
-            border: 1px solid #444;
-            border-radius: 8px;
-            padding: 15px;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            transition: background-color 0.4s, transform 0.1s ease;
-            position: relative;
+        @keyframes nodeFlashAnim {
+            0% { box-shadow: 0 0 35px var(--accent-cyan); border-color: #fff; }
+            100% { box-shadow: 0 10px 30px rgba(0,0,0,0.6); }
         }
+        .node-spawn-flash { animation: nodeFlashAnim 0.6s ease-out forwards; }
 
-        /* אפקט הבהרה בהוספת תיבה חדשה */
-        @keyframes flash-new {
-            0% { border-color: #ffffff; box-shadow: 0 0 20px #ffffff; }
-            100% { border-color: #444; box-shadow: none; }
+        .node-header {
+            background: rgba(255,255,255,0.03); border-bottom: 1px solid var(--border-color);
+            padding: 6px 10px; font-size: 11px; font-weight: 700; cursor: grab;
+            display: flex; justify-content: space-between; align-items: center; border-radius: 8px 8px 0 0;
+            flex-shrink: 0; touch-action: none;
         }
+        .close-btn { color: var(--accent-red); cursor: pointer; font-weight: bold; font-size: 14px; padding: 4px; }
+        .close-btn:hover { background: rgba(255, 51, 68, 0.2); border-radius: 3px; }
 
-        .module-card.just-added {
-            animation: flash-new 0.8s ease-out;
+        .node-body { padding: 10px; display: flex; flex-direction: column; gap: 8px; font-size: 10px; flex: 1; overflow-y: auto; touch-action: pan-y; }
+        .ports-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px; }
+        .port-group { display: flex; align-items: center; gap: 4px; font-size: 9px; color: var(--text-muted); font-weight: bold; }
+        
+        .port {
+            width: 22px; height: 22px; background: #000; border: 2px solid var(--text-main);
+            border-radius: 50%; cursor: pointer; display: inline-block; touch-action: none;
+            box-sizing: border-box; flex-shrink: 0;
         }
+        .port.out { border-color: var(--accent-pink); }
+        .port.in { border-color: var(--accent-cyan); }
+        .port:hover { transform: scale(1.25); background: var(--accent-yellow); }
 
-        .module-title {
-            font-weight: bold;
-            font-size: 16px;
-            border-bottom: 1px solid rgba(255,255,255,0.2);
-            padding-bottom: 5px;
-            display: flex;
-            justify-content: space-between;
-        }
+        .theme-btn-group { display: flex; gap: 3px; margin-top: 4px; }
+        .theme-btn { background: #1c1f2b; color: #aaa; border: 1px solid var(--border-color); border-radius: 3px; font-size: 8px; padding: 2px 4px; cursor: pointer; }
+        .theme-btn:hover { color: #fff; border-color: var(--accent-cyan); }
 
-        /* Ribbon synth */
-        #ribbon-container {
-            background: #000;
-            border: 2px solid var(--accent-color);
-            border-radius: 8px;
-            height: 100px;
-            position: relative;
-            cursor: pointer;
-            touch-action: none;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            user-select: none;
+        .mixer-channel { background: #0c0d12; border: 1px solid var(--border-color); padding: 6px; border-radius: 4px; margin-top: 4px; }
+        .row-flex { display: flex; justify-content: space-between; align-items: center; gap: 4px; margin: 2px 0; }
+        
+        input[type=range] { 
+            accent-color: var(--accent-cyan); width: 100px; height: 24px; touch-action: pan-x; 
         }
+        select, input[type=number] { 
+            background: #08090c; color: #fff; border: 1px solid var(--border-color); padding: 4px; font-size: 11px; border-radius: 4px; touch-action: manipulation;
+        }
+        
+        .mini-seq { display: grid; grid-template-columns: repeat(8, 1fr); gap: 2px; flex: 1; }
+        .step-cell { aspect-ratio: 1; background: #08090c; border: 1px solid #242836; border-radius: 2px; cursor: pointer; touch-action: manipulation; }
+        .step-cell.active { background: var(--accent-green); box-shadow: 0 0 5px var(--accent-green); }
+        .step-cell.playing { border-color: var(--accent-yellow); transform: scale(1.1); }
 
-        #ribbon-touch-point {
-            position: absolute;
-            width: 20px;
-            height: 100%;
-            background: rgba(0, 173, 181, 0.5);
-            border: 2px solid #fff;
-            pointer-events: none;
-            display: none;
-        }
+        .ribbon-bar { width: 100%; height: 42px; background: linear-gradient(90deg, #ff2a74, #00f0ff, #ffe600); border-radius: 4px; cursor: pointer; touch-action: none; position: relative; }
+        .ribbon-hold-active { outline: 2px solid var(--accent-green); }
 
-        /* Visual EQ Canvas */
-        .eq-canvas {
-            background: #000;
-            border-radius: 6px;
-            width: 100%;
-            height: 150px;
-            cursor: pointer;
-            touch-action: none;
-        }
-
-        /* Step sequencer grid */
-        .step-grid {
-            display: grid;
-            grid-template-columns: repeat(8, 1fr);
-            gap: 5px;
-            margin-top: 5px;
-        }
-
-        .step-cell {
-            aspect-ratio: 1;
-            background: #333;
-            border-radius: 4px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .step-cell.active {
-            background: var(--accent-color);
-        }
-
-        .step-cell.current {
-            border: 2px solid #fff;
-        }
-
-        .knob-container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            font-size: 12px;
-        }
-
-        input[type=range] {
-            width: 100%;
-        }
+        .btn-act { background: var(--accent-cyan); color: #000; border: none; padding: 6px 8px; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 10px; width: 100%; margin-top: 2px; touch-action: manipulation; }
+        .xy-pad { width: 100%; height: 80px; background: #08090c; border: 1px solid var(--border-color); position: relative; border-radius: 4px; cursor: crosshair; touch-action: none; flex-shrink: 0; }
+        .xy-pointer { width: 12px; height: 12px; background: var(--accent-pink); border: 1px solid #fff; border-radius: 50%; position: absolute; transform: translate(-50%, -50%); pointer-events: none; }
+        .eq-canvas { width: 100%; height: 60px; background: #08090c; border: 1px solid var(--border-color); border-radius: 4px; cursor: pointer; }
+        
+        .lfo-scope-canvas { width: 100%; height: 35px; background: #08090c; border: 1px solid var(--border-color); border-radius: 4px; }
     </style>
 </head>
 <body>
 
-    <!-- תפריט שמאלי -->
-    <div id="sidebar">
-        <h3>הוספת מודולים</h3>
-        <button class="btn" onclick="addModule('ribbon')">Ribbon Synthesizer</button>
-        <button class="btn" onclick="addModule('pitchshift')">Pitch Shifter (LFO)</button>
-        <button class="btn" onclick="addModule('degrader')">Bit Degrader (LFO)</button>
-        <button class="btn" onclick="addModule('eq')">Visual EQ (3-Band)</button>
-        <button class="btn" onclick="addModule('sequencer')">Step Sequencer (8 Step)</button>
-        <button class="btn" onclick="addModule('drums')">808 Drum Machine</button>
-        <button class="btn" onclick="addModule('dodecaphonic')">מכונה דודקפונית</button>
+    <div class="sidebar">
+        <div class="brand-logo">MODULAR<span>LAB</span></div>
+
+        <div class="category-title">MODULATION & UTILITY</div>
+        <button class="spawn-btn" onclick="createNode('lfo')">+ LFO Oscillator</button>
+
+        <div class="category-title">SOUND GENERATORS</div>
+        <button class="spawn-btn" onclick="createNode('osc')">+ Oscillator Pro</button>
+        <button class="spawn-btn" onclick="createNode('ribbon')">+ Ribbon Synthesizer</button>
+        <button class="spawn-btn" onclick="createNode('drums')">+ Drum Machine 808</button>
+        <button class="spawn-btn" onclick="createNode('soup')">+ Soup Generator</button>
+        <button class="spawn-btn" onclick="createNode('granular')">+ Granular Synth</button>
+        <button class="spawn-btn" onclick="createNode('dodeca')">+ Dodecaphonic Row</button>
+        <button class="spawn-btn" onclick="createNode('chaos')">+ Radical Chaos Engine</button>
+
+        <div class="category-title">CONTROLLERS & SEQUENCERS</div>
+        <button class="spawn-btn" onclick="createNode('seq')">+ 8-Step Sequencer</button>
+
+        <div class="category-title">EFFECTS & AUDIO PROCESSING</div>
+        <button class="spawn-btn" onclick="createNode('visualeq')">+ Visual EQ 3-Band</button>
+        <button class="spawn-btn" onclick="createNode('degrader')">+ Degrader (LFO Shaper)</button>
+        <button class="spawn-btn" onclick="createNode('pitchshift')">+ Pitch Shifter (LFO)</button>
+        <button class="spawn-btn" onclick="createNode('reverb')">+ Reverb Engine</button>
+        <button class="spawn-btn" onclick="createNode('pingpong')">+ Ping-Pong Delay</button>
+        <button class="spawn-btn" onclick="createNode('filter')">+ Biquad Filter</button>
+        <button class="spawn-btn" onclick="createNode('delay')">+ Echo Delay</button>
+
+        <div class="category-title">MIXING & OUTPUT</div>
+        <button class="spawn-btn" onclick="createNode('mixer')">+ Mixer Channel Strip</button>
+        <button class="spawn-btn" onclick="createNode('master')">+ Master Output</button>
     </div>
 
-    <!-- תוכן מרכזי -->
-    <div id="main-content">
-        <div class="header-controls">
-            <h2>Audio Workstation System</h2>
-            <div>
-                <label>ערכת צבעי תיבות: </label>
-                <button class="btn" onclick="setModuleTheme('dark')">כהה</button>
-                <button class="btn" onclick="setModuleTheme('light')">בהיר</button>
-                <button class="btn" onclick="setModuleTheme('random')">אקראי</button>
-            </div>
+    <div id="viewport">
+        <div id="world">
+            <div class="infinite-grid"></div>
+            <svg id="svgCanvas"></svg>
         </div>
 
-        <div id="modules-container" class="grid-container">
-            <!-- מודולים יתווספו לכאן -->
+        <div class="master-oscilloscope">
+            <div class="scope-title">MASTER OSCILLOSCOPE</div>
+            <canvas id="scopeCanvas"></canvas>
+        </div>
+
+        <div class="preset-container">
+            <button class="preset-btn" onclick="loadPreset()">Default Setup</button>
+            <button class="preset-btn danger" onclick="clearCanvas()">Clear All</button>
+        </div>
+
+        <div class="zoom-controls">
+            <button class="zoom-btn" onclick="setZoom(scale + 0.15)">+</button>
+            <button class="zoom-btn" onclick="resetZoom()">100%</button>
+            <button class="zoom-btn" onclick="setZoom(scale - 0.15)">-</button>
         </div>
     </div>
 
-<script>
-    // Web Audio Context setup
-    const AudioContext = window.AudioContext || window.webkitAudioContext;
-    const audioCtx = new AudioContext();
-
-    let currentTheme = 'dark';
-
-    // שינוי ערכת נושא לתיבות
-    function setModuleTheme(theme) {
-        currentTheme = theme;
-        const cards = document.querySelectorAll('.module-card');
-        cards.forEach(card => applyThemeToCard(card));
-    }
-
-    function applyThemeToCard(card) {
-        if (currentTheme === 'dark') {
-            card.style.backgroundColor = '#2a2a2a';
-            card.style.color = '#ececec';
-        } else if (currentTheme === 'light') {
-            card.style.backgroundColor = '#e0e0e0';
-            card.style.color = '#111111';
-        } else if (currentTheme === 'random') {
-            const hue = Math.floor(Math.random() * 360);
-            card.style.backgroundColor = `hsl(${hue}, 40%, 25%)`;
-            card.style.color = '#ffffff';
-        }
-    }
-
-    // הוספת מודול עם אפקט הבהרה
-    function addModule(type) {
-        const container = document.getElementById('modules-container');
-        const card = document.createElement('div');
-        card.className = 'module-card just-added';
-        applyThemeToCard(card);
-
-        // הסרת קלאס ההבהרה בסיום האנימציה
-        setTimeout(() => card.classList.remove('just-added'), 800);
-
-        switch(type) {
-            case 'ribbon': createRibbonModule(card); break;
-            case 'pitchshift': createPitchShiftModule(card); break;
-            case 'degrader': createDegraderModule(card); break;
-            case 'eq': createEQModule(card); break;
-            case 'sequencer': createSequencerModule(card); break;
-            case 'drums': createDrumsModule(card); break;
-            case 'dodecaphonic': createDodecaphonicModule(card); break;
-        }
-
-        container.appendChild(card);
-    }
-
-    // 1. Ribbon Synth + Hold Button
-    function createRibbonModule(card) {
-        card.innerHTML = `
-            <div class="module-title">
-                Ribbon Synth
-                <button class="btn" id="hold-btn">Hold: OFF</button>
-            </div>
-            <div id="ribbon-container">
-                <span>נגן על הריבון (משיכת אצבע/עכבר)</span>
-                <div id="ribbon-touch-point"></div>
-            </div>
-        `;
-        
-        let isHolding = false;
-        let isPlaying = false;
-        let osc = null;
-        let gain = null;
-
-        const holdBtn = card.querySelector('#hold-btn');
-        const ribbon = card.querySelector('#ribbon-container');
-        const touchPoint = card.querySelector('#ribbon-touch-point');
-
-        holdBtn.onclick = () => {
-            isHolding = !isHolding;
-            holdBtn.innerText = `Hold: ${isHolding ? 'ON' : 'OFF'}`;
-            holdBtn.classList.toggle('active', isHolding);
-            if (!isHolding && !isPlaying) stopSound();
-        };
-
-        function startSound(freq) {
-            if (!osc) {
-                osc = audioCtx.createOscillator();
-                gain = audioCtx.createGain();
-                osc.type = 'sawtooth';
-                osc.connect(gain);
-                gain.connect(audioCtx.destination);
-                osc.start();
+    <script>
+        // 1. תיקון גלילה באייפד בתוך ה-Sidebar ובתוך התיבות
+        document.addEventListener('touchmove', function(e) { 
+            if (e.target.closest('.sidebar') || e.target.closest('.node-body')) {
+                return; 
             }
-            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
-            gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+            e.preventDefault(); 
+        }, { passive: false });
+
+        let scale = 1;
+        let panX = 0;
+        let panY = 0;
+        let isSpacePressed = false;
+        let isPanning = false;
+        let startPan = { x: 0, y: 0 };
+
+        const viewport = document.getElementById('viewport');
+        const world = document.getElementById('world');
+
+        function updateWorldTransform() {
+            world.style.transform = `translate(${panX}px, ${panY}px) scale(${scale})`;
         }
 
-        function stopSound() {
-            if (gain && !isHolding) {
-                gain.gain.setValueAtTime(0, audioCtx.currentTime);
+        function setZoom(newScale, cx = viewport.clientWidth / 2, cy = viewport.clientHeight / 2) {
+            const clampedScale = Math.min(Math.max(newScale, 0.2), 3);
+            const worldX = (cx - panX) / scale;
+            const worldY = (cy - panY) / scale;
+
+            scale = clampedScale;
+            panX = cx - worldX * scale;
+            panY = cy - worldY * scale;
+
+            updateWorldTransform();
+            updateCables();
+        }
+
+        function resetZoom() {
+            scale = 1; panX = 0; panY = 0;
+            updateWorldTransform();
+            updateCables();
+        }
+
+        window.addEventListener('keydown', (e) => { if (e.code === 'Space') isSpacePressed = true; });
+        window.addEventListener('keyup', (e) => { if (e.code === 'Space') isSpacePressed = false; });
+
+        viewport.addEventListener('wheel', (e) => {
+            e.preventDefault();
+            const zoomFactor = e.deltaY < 0 ? 1.1 : 0.9;
+            setZoom(scale * zoomFactor, e.clientX - viewport.getBoundingClientRect().left, e.clientY - viewport.getBoundingClientRect().top);
+        }, { passive: false });
+
+        viewport.addEventListener('mousedown', (e) => {
+            if (e.target === viewport || e.target.classList.contains('infinite-grid') || isSpacePressed || e.button === 1) {
+                isPanning = true;
+                viewport.classList.add('panning');
+                startPan = { x: e.clientX - panX, y: e.clientY - panY };
             }
-        }
-
-        function handlePointer(e) {
-            const rect = ribbon.getBoundingClientRect();
-            const x = Math.max(0, Math.min(e.clientX - rect.left, rect.width));
-            const freq = 100 + (x / rect.width) * 800; // 100Hz - 900Hz
-            
-            touchPoint.style.display = 'block';
-            touchPoint.style.left = `${x}px`;
-            
-            if (audioCtx.state === 'suspended') audioCtx.resume();
-            startSound(freq);
-        }
-
-        ribbon.onpointerdown = (e) => {
-            isPlaying = true;
-            ribbon.setPointerCapture(e.pointerId);
-            handlePointer(e);
-        };
-        ribbon.onpointermove = (e) => { if (isPlaying) handlePointer(e); };
-        ribbon.onpointerup = () => {
-            isPlaying = false;
-            stopSound();
-        };
-    }
-
-    // 2. Pitch Shifter (עם תנועת LFO ויזואלית ושמעית)
-    function createPitchShiftModule(card) {
-        card.innerHTML = `
-            <div class="module-title">Pitch Shifter (LFO Modulation)</div>
-            <div class="knob-container">
-                <label>LFO Rate (מהירות תנועה): <span id="rate-val">5</span> Hz</label>
-                <input type="range" id="lfo-rate" min="0.1" max="20" step="0.1" value="5">
-            </div>
-            <div class="knob-container">
-                <label>LFO Depth (עומק התנועה): <span id="depth-val">50</span></label>
-                <input type="range" id="lfo-depth" min="0" max="200" value="50">
-            </div>
-            <div style="text-align:center; padding:10px; background:#000; margin-top:5px; border-radius:4px;">
-                Pitch Offset Visualizer: <b id="pitch-vis">0</b> Hz
-            </div>
-        `;
-
-        let rate = 5;
-        let depth = 50;
-        
-        const rateInput = card.querySelector('#lfo-rate');
-        const depthInput = card.querySelector('#lfo-depth');
-        const vis = card.querySelector('#pitch-vis');
-
-        rateInput.oninput = (e) => { rate = parseFloat(e.target.value); card.querySelector('#rate-val').innerText = rate; };
-        depthInput.oninput = (e) => { depth = parseFloat(e.target.value); card.querySelector('#depth-val').innerText = depth; };
-
-        // סימולציית תנועה ויזואלית שממחישה מה Pitch Shift עושה
-        setInterval(() => {
-            const offset = Math.sin(Date.now() * 0.001 * rate * Math.PI * 2) * depth;
-            vis.innerText = offset.toFixed(1);
-            vis.style.color = offset > 0 ? '#00ffcc' : '#ff0055';
-        }, 30);
-    }
-
-    // 3. Bit Degrader (עם תנועת LFO ויזואלית)
-    function createDegraderModule(card) {
-        card.innerHTML = `
-            <div class="module-title">Bit Degrader (Crusher LFO)</div>
-            <div class="knob-container">
-                <label>LFO Modulation Rate: <span id="deg-rate-val">2</span> Hz</label>
-                <input type="range" id="deg-rate" min="0.1" max="10" step="0.1" value="2">
-            </div>
-            <div class="knob-container">
-                <label>Bit Depth Range: <span id="bits-val">4 - 16</span> Bits</label>
-                <input type="range" id="deg-depth" min="2" max="16" value="4">
-            </div>
-            <div style="text-align:center; padding:10px; background:#000; margin-top:5px; border-radius:4px;">
-                Current Resolution: <b id="deg-vis">16 Bit</b>
-            </div>
-        `;
-
-        let rate = 2;
-        const rateInput = card.querySelector('#deg-rate');
-        const vis = card.querySelector('#deg-vis');
-
-        rateInput.oninput = (e) => { rate = parseFloat(e.target.value); card.querySelector('#deg-rate-val').innerText = rate; };
-
-        setInterval(() => {
-            const val = Math.floor(8 + Math.sin(Date.now() * 0.001 * rate * Math.PI * 2) * 6);
-            vis.innerText = `${val} Bit`;
-        }, 50);
-    }
-
-    // 4. Visual EQ (3 נקודות גרירה, Low/High Slope)
-    function createEQModule(card) {
-        card.innerHTML = `
-            <div class="module-title">Visual EQ (3-Band Canvas)</div>
-            <canvas class="eq-canvas" width="300" height="150"></canvas>
-        `;
-
-        const canvas = card.querySelector('canvas');
-        const ctx = canvas.getContext('2d');
-
-        // 3 נקודות: Low Slope, Sine/Mid, High Slope
-        let points = [
-            { x: 50, y: 100 },
-            { x: 150, y: 40 },
-            { x: 250, y: 100 }
-        ];
-
-        let draggingPoint = null;
-
-        function drawEQ() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            
-            // גריד ברקע
-            ctx.strokeStyle = '#333';
-            ctx.beginPath();
-            for(let x=0; x<canvas.width; x+=30) { ctx.moveTo(x,0); ctx.lineTo(x,canvas.height); }
-            for(let y=0; y<canvas.height; y+=30) { ctx.moveTo(0,y); ctx.lineTo(canvas.width,y); }
-            ctx.stroke();
-
-            // ציור עקומת סינוס/סלופים
-            ctx.beginPath();
-            ctx.moveTo(0, points[0].y);
-            ctx.bezierCurveTo(points[0].x, points[0].y, points[1].x, points[1].y, points[1].x, points[1].y);
-            ctx.bezierCurveTo(points[1].x, points[1].y, points[2].x, points[2].y, canvas.width, points[2].y);
-            ctx.strokeStyle = '#00adb5';
-            ctx.lineWidth = 3;
-            ctx.stroke();
-
-            // ציור הנקודות
-            points.forEach((p, idx) => {
-                ctx.beginPath();
-                ctx.arc(p.x, p.y, 7, 0, Math.PI * 2);
-                ctx.fillStyle = idx === 1 ? '#ff0055' : '#ffffff';
-                ctx.fill();
-            });
-        }
-
-        canvas.onpointerdown = (e) => {
-            const rect = canvas.getBoundingClientRect();
-            const x = e.clientX - rect.left;
-            const y = e.clientY - rect.top;
-            
-            points.forEach((p, i) => {
-                if (Math.hypot(p.x - x, p.y - y) < 15) {
-                    draggingPoint = i;
-                    canvas.setPointerCapture(e.pointerId);
-                }
-            });
-        };
-
-        canvas.onpointermove = (e) => {
-            if (draggingPoint !== null) {
-                const rect = canvas.getBoundingClientRect();
-                points[draggingPoint].y = Math.max(10, Math.min(canvas.height - 10, e.clientY - rect.top));
-                if (draggingPoint === 1) {
-                    points[draggingPoint].x = Math.max(70, Math.min(canvas.width - 70, e.clientX - rect.left));
-                }
-                drawEQ();
-            }
-        };
-
-        canvas.onpointerup = () => { draggingPoint = null; };
-        drawEQ();
-    }
-
-    // 5. Step Sequencer (גרפי עם טמפו ו-8 תיבות סימון)
-    function createSequencerModule(card) {
-        card.innerHTML = `
-            <div class="module-title">Step Sequencer (8 Steps)</div>
-            <div style="display:flex; justify-content:space-between; align-items:center;">
-                <button class="btn" id="seq-play">Play</button>
-                <div>
-                    <label>Tempo: </label>
-                    <input type="number" id="seq-bpm" value="120" style="width:60px;"> BPM
-                </div>
-            </div>
-            <div class="step-grid">
-                ${Array(8).fill(0).map((_, i) => `<div class="step-cell" data-step="${i}">${i+1}</div>`).join('')}
-            </div>
-        `;
-
-        let playing = false;
-        let currentStep = 0;
-        let timer = null;
-        const steps = card.querySelectorAll('.step-cell');
-
-        steps.forEach(step => {
-            step.onclick = () => step.classList.toggle('active');
         });
 
-        const playBtn = card.querySelector('#seq-play');
-        playBtn.onclick = () => {
-            playing = !playing;
-            playBtn.innerText = playing ? 'Stop' : 'Play';
-            if (playing) runSequencer();
-            else clearTimeout(timer);
-        };
-
-        function runSequencer() {
-            steps.forEach(s => s.classList.remove('current'));
-            steps[currentStep].classList.add('current');
-
-            if (steps[currentStep].classList.contains('active')) {
-                // השמעת סאונד קצר במידה והסטפ פעיל
-                const osc = audioCtx.createOscillator();
-                const g = audioCtx.createGain();
-                osc.connect(g); g.connect(audioCtx.destination);
-                osc.frequency.value = 440;
-                g.gain.setValueAtTime(0.2, audioCtx.currentTime);
-                g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.1);
-                osc.start(); osc.stop(audioCtx.currentTime + 0.1);
+        window.addEventListener('mousemove', (e) => {
+            if (isPanning) {
+                panX = e.clientX - startPan.x;
+                panY = e.clientY - startPan.y;
+                updateWorldTransform();
             }
+        });
 
-            currentStep = (currentStep + 1) % 8;
-            const bpm = parseInt(card.querySelector('#seq-bpm').value) || 120;
-            const interval = (60 / bpm / 2) * 1000;
-            timer = setTimeout(runSequencer, interval);
-        }
-    }
+        window.addEventListener('mouseup', () => {
+            isPanning = false;
+            viewport.classList.remove('panning');
+        });
 
-    // 6. Drum Machine 808 (סאונדים דיפולטיביים של 808 בסנתוז)
-    function createDrumsModule(card) {
-        card.innerHTML = `
-            <div class="module-title">TR-808 Drum Machine</div>
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
-                <button class="btn" onclick="play808Kick()">808 Kick</button>
-                <button class="btn" onclick="play808Snare()">808 Snare</button>
-                <button class="btn" onclick="play808HiHat()">808 Hi-Hat</button>
-                <button class="btn" onclick="play808Clap()">808 Clap</button>
-            </div>
-        `;
-    }
+        let touchStartDist = 0;
+        viewport.addEventListener('touchstart', (e) => {
+            if (e.touches.length === 2) {
+                touchStartDist = Math.hypot(
+                    e.touches[0].clientX - e.touches[1].clientX,
+                    e.touches[0].clientY - e.touches[1].clientY
+                );
+            } else if (e.target === viewport || e.target.classList.contains('infinite-grid')) {
+                isPanning = true;
+                startPan = { x: e.touches[0].clientX - panX, y: e.touches[0].clientY - panY };
+            }
+        }, { passive: false });
 
-    // 808 Kick Synthesis
-    function play808Kick() {
-        if (audioCtx.state === 'suspended') audioCtx.resume();
-        const osc = audioCtx.createOscillator();
-        const gain = audioCtx.createGain();
-        osc.connect(gain); gain.connect(audioCtx.destination);
+        viewport.addEventListener('touchmove', (e) => {
+            if (e.touches.length === 2) {
+                e.preventDefault();
+                const dist = Math.hypot(
+                    e.touches[0].clientX - e.touches[1].clientX,
+                    e.touches[0].clientY - e.touches[1].clientY
+                );
+                const factor = dist / touchStartDist;
+                const midX = (e.touches[0].clientX + e.touches[1].clientX) / 2 - viewport.getBoundingClientRect().left;
+                const midY = (e.touches[0].clientY + e.touches[1].clientY) / 2 - viewport.getBoundingClientRect().top;
+                setZoom(scale * factor, midX, midY);
+                touchStartDist = dist;
+            } else if (isPanning && e.touches.length === 1) {
+                e.preventDefault();
+                panX = e.touches[0].clientX - startPan.x;
+                panY = e.touches[0].clientY - startPan.y;
+                updateWorldTransform();
+            }
+        }, { passive: false });
 
-        osc.frequency.setValueAtTime(150, audioCtx.currentTime);
-        osc.frequency.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+        viewport.addEventListener('touchend', () => { isPanning = false; });
 
-        gain.gain.setValueAtTime(1, audioCtx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.5);
+        let audioCtx = null;
+        let analyserNode = null;
+        const nodesRegistry = {};
+        const activeCables = [];
 
-        osc.start(); osc.stop(audioCtx.currentTime + 0.5);
-    }
-
-    // 808 Snare Synthesis
-    function play808Snare() {
-        if (audioCtx.state === 'suspended') audioCtx.resume();
-        // Noise
-        const bufferSize = audioCtx.sampleRate * 0.2;
-        const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
-        const data = buffer.getChannelData(0);
-        for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
-
-        const noise = audioCtx.createBufferSource();
-        noise.buffer = buffer;
-        const filter = audioCtx.createBiquadFilter();
-        filter.type = 'highpass';
-        filter.frequency.value = 1000;
-        
-        const gain = audioCtx.createGain();
-        gain.gain.setValueAtTime(0.5, audioCtx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
-
-        noise.connect(filter); filter.connect(gain); gain.connect(audioCtx.destination);
-        noise.start();
-    }
-
-    // 808 Hi-Hat Synthesis
-    function play808HiHat() {
-        if (audioCtx.state === 'suspended') audioCtx.resume();
-        const bufferSize = audioCtx.sampleRate * 0.05;
-        const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
-        const data = buffer.getChannelData(0);
-        for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
-
-        const noise = audioCtx.createBufferSource();
-        noise.buffer = buffer;
-        const filter = audioCtx.createBiquadFilter();
-        filter.type = 'highpass';
-        filter.frequency.value = 7000;
-
-        const gain = audioCtx.createGain();
-        gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.05);
-
-        noise.connect(filter); filter.connect(gain); gain.connect(audioCtx.destination);
-        noise.start();
-    }
-
-    function play808Clap() { play808Snare(); } // פשוט לשם הדגמה
-
-    // 7. מכונה דודקפונית (עם מנגינה שנייה וליווי)
-    function createDodecaphonicModule(card) {
-        card.innerHTML = `
-            <div class="module-title">מכונה דודקפונית (12-Tone System)</div>
-            <div style="display:flex; flex-direction:column; gap:8px;">
-                <button class="btn" id="dodec-main">נגן מנגינה ראשית</button>
-                <button class="btn" id="dodec-sec">נגן מנגינה שנייה (Inversion)</button>
-                <button class="btn" id="dodec-acc">נגן ליווי (Accompaniment)</button>
-            </div>
-        `;
-
-        // סדרה דודקפונית בסיסית (12 טונים)
-        const series = [0, 1, 3, 9, 2, 11, 4, 10, 7, 8, 5, 6];
-
-        function playSeries(notes, octaveMultiplier = 1) {
+        function getAudioContext() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                analyserNode = audioCtx.createAnalyser();
+                analyserNode.fftSize = 256;
+                drawScope();
+            }
             if (audioCtx.state === 'suspended') audioCtx.resume();
-            notes.forEach((note, idx) => {
+            return audioCtx;
+        }
+
+        function drawScope() {
+            const canvas = document.getElementById('scopeCanvas');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            const bufferLength = analyserNode.frequencyBinCount;
+            const dataArray = new Uint8Array(bufferLength);
+
+            function render() {
+                if (!analyserNode) return;
+                requestAnimationFrame(render);
+                analyserNode.getByteTimeDomainData(dataArray);
+                ctx.fillStyle = '#0b0c10'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.lineWidth = 1.5; ctx.strokeStyle = '#00f0ff'; ctx.beginPath();
+                let sliceWidth = canvas.width / bufferLength, x = 0;
+                for (let i = 0; i < bufferLength; i++) {
+                    let v = dataArray[i] / 128.0, y = v * canvas.height / 2;
+                    if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+                    x += sliceWidth;
+                }
+                ctx.lineTo(canvas.width, canvas.height / 2); ctx.stroke();
+            }
+            render();
+        }
+
+        function updateLfoRate(id, val) {
+            if (!nodesRegistry[id]) return;
+            const param = nodesRegistry[id].lfoOsc.frequency;
+            param.setTargetAtTime(parseFloat(val), audioCtx.currentTime, 0.015);
+        }
+
+        function updateLfoDepth(id, val) {
+            if (!nodesRegistry[id]) return;
+            const param = nodesRegistry[id].lfoGain.gain;
+            param.setTargetAtTime(parseFloat(val), audioCtx.currentTime, 0.015);
+        }
+
+        // 4. שינוי נושא/צבע לתיבות
+        function setNodeTheme(nodeId, theme) {
+            const nodeEl = document.getElementById(nodeId);
+            if (!nodeEl) return;
+            nodeEl.classList.remove('theme-light', 'theme-random');
+            if (theme === 'light') {
+                nodeEl.classList.add('theme-light');
+            } else if (theme === 'random') {
+                nodeEl.classList.add('theme-random');
+                const randomHue = Math.floor(Math.random() * 360);
+                nodeEl.style.borderColor = `hsl(${randomHue}, 80%, 55%)`;
+                nodeEl.style.boxShadow = `0 10px 25px hsl(${randomHue}, 80%, 25%)`;
+            } else {
+                nodeEl.style.borderColor = '';
+                nodeEl.style.boxShadow = '';
+            }
+        }
+
+        let nodeCounter = 0;
+        function createNode(type, worldX, worldY) {
+            getAudioContext();
+            nodeCounter++;
+            const id = `node_${nodeCounter}`;
+            const node = document.createElement('div');
+            node.className = 'node node-spawn-flash'; node.id = id;
+            
+            // 3. הבהרה רגעית (Flash) בעת יצירה
+            setTimeout(() => node.classList.remove('node-spawn-flash'), 650);
+
+            const posX = worldX !== undefined ? worldX : (-panX + viewport.clientWidth / 2 - 100) / scale;
+            const posY = worldY !== undefined ? worldY : (-panY + viewport.clientHeight / 2 - 100) / scale;
+
+            node.style.left = posX + 'px';
+            node.style.top = posY + 'px';
+
+            new ResizeObserver(() => updateCables()).observe(node);
+
+            let bodyHTML = '';
+            let audioObj = { 
+                input: audioCtx.createGain(), 
+                output: audioCtx.createGain(),
+                type: type,
+                isPlaying: false
+            };
+
+            if (type === 'lfo') {
+                const lfoOsc = audioCtx.createOscillator();
+                const lfoGain = audioCtx.createGain();
+                
+                lfoOsc.type = 'sine';
+                lfoOsc.frequency.value = 2;
+                lfoGain.gain.value = 600; 
+
+                lfoOsc.connect(lfoGain);
+                
+                audioObj.output = lfoGain; 
+                audioObj.isModulator = true;
+                audioObj.lfoOsc = lfoOsc;
+                audioObj.lfoGain = lfoGain;
+
+                lfoOsc.start();
+
+                bodyHTML = `
+                    <canvas class="lfo-scope-canvas" id="lfo_canvas_${id}"></canvas>
+                    <div class="row-flex">RATE (Hz): 
+                        <input type="range" min="0.1" max="20" step="0.1" value="2" 
+                        oninput="updateLfoRate('${id}', this.value)">
+                    </div>
+                    <div class="row-flex">DEPTH: 
+                        <input type="range" min="1" max="2400" step="10" value="600" 
+                        oninput="updateLfoDepth('${id}', this.value)">
+                    </div>
+                    <div class="row-flex">WAVE: 
+                        <select onchange="nodesRegistry['${id}'].lfoOsc.type=this.value">
+                            <option>sine</option>
+                            <option>triangle</option>
+                            <option>square</option>
+                            <option>sawtooth</option>
+                        </select>
+                    </div>`;
+            }
+            // 2. Ribbon Synthesizer + Hold Button
+            else if (type === 'ribbon') {
                 const osc = audioCtx.createOscillator();
                 const gain = audioCtx.createGain();
-                osc.connect(gain); gain.connect(audioCtx.destination);
-                
-                const freq = 220 * Math.pow(2, (note / 12)) * octaveMultiplier;
-                osc.frequency.value = freq;
-                
-                const startTime = audioCtx.currentTime + (idx * 0.25);
-                gain.gain.setValueAtTime(0.2, startTime);
-                gain.gain.exponentialRampToValueAtTime(0.001, startTime + 0.2);
+                osc.type = 'sawtooth';
+                gain.gain.value = 0;
+                osc.start();
+                osc.connect(gain);
+                gain.connect(audioObj.output);
+                audioObj.osc = osc;
+                audioObj.gain = gain;
+                audioObj.isHold = false;
 
-                osc.start(startTime);
-                osc.stop(startTime + 0.2);
+                bodyHTML = `
+                    <div class="ribbon-bar" id="ribbon_bar_${id}"></div>
+                    <div class="row-flex">
+                        <span>HOLD NOTE</span>
+                        <input type="checkbox" id="ribbon_hold_${id}" onchange="nodesRegistry['${id}'].isHold = this.checked; if(!this.checked) nodesRegistry['${id}'].gain.gain.value=0;">
+                    </div>
+                    <div class="row-flex">WAVE: 
+                        <select onchange="nodesRegistry['${id}'].osc.type=this.value">
+                            <option>sawtooth</option>
+                            <option>sine</option>
+                            <option>square</option>
+                            <option>triangle</option>
+                        </select>
+                    </div>`;
+            }
+            // 6. Visual EQ (3-Band Point Draggable + Curves + Frequency Sine Wave)
+            else if (type === 'visualeq') {
+                const low = audioCtx.createBiquadFilter(); low.type = 'lowshelf'; low.frequency.value = 250;
+                const mid = audioCtx.createBiquadFilter(); mid.type = 'peaking'; mid.frequency.value = 1000; mid.Q.value = 1;
+                const high = audioCtx.createBiquadFilter(); high.type = 'highshelf'; high.frequency.value = 4000;
+                const eqAnalyser = audioCtx.createAnalyser(); eqAnalyser.fftSize = 128;
+
+                audioObj.input.connect(low); low.connect(mid); mid.connect(high);
+                high.connect(eqAnalyser); high.connect(audioObj.output);
+
+                audioObj.low = low; audioObj.mid = mid; audioObj.high = high; audioObj.eqAnalyser = eqAnalyser;
+
+                bodyHTML = `
+                    <canvas class="eq-canvas" id="eq_canvas_${id}"></canvas>
+                    <div class="row-flex">LOW: <input type="range" id="eq_low_${id}" min="-24" max="24" step="1" value="0" oninput="nodesRegistry['${id}'].low.gain.value=this.value"></div>
+                    <div class="row-flex">MID: <input type="range" id="eq_mid_${id}" min="-24" max="24" step="1" value="0" oninput="nodesRegistry['${id}'].mid.gain.value=this.value"></div>
+                    <div class="row-flex">HIGH: <input type="range" id="eq_high_${id}" min="-24" max="24" step="1" value="0" oninput="nodesRegistry['${id}'].high.gain.value=this.value"></div>`;
+            }
+            else if (type === 'osc') {
+                const osc = audioCtx.createOscillator();
+                osc.type = 'sawtooth'; osc.frequency.value = 220; osc.start();
+                osc.connect(audioObj.output);
+                audioObj.osc = osc;
+                bodyHTML = `
+                    <div class="row-flex">FREQ: <input type="range" min="40" max="2000" value="220" oninput="nodesRegistry['${id}'].osc.frequency.value=this.value"></div>
+                    <div class="row-flex">WAVE: <select onchange="nodesRegistry['${id}'].osc.type=this.value"><option>sawtooth</option><option>sine</option><option>square</option><option>triangle</option></select></div>`;
+            } 
+            // 8. Drum Machine (Authentic 808 Sounds)
+            else if (type === 'drums') {
+                audioObj.steps = { bd: Array(8).fill(false), sd: Array(8).fill(false), hh: Array(8).fill(false) };
+                audioObj.gains = { bd: 0.8, sd: 0.6, hh: 0.4 };
+                bodyHTML = `
+                    <div class="row-flex"><span>BD (808)</span><div class="mini-seq">${Array(8).fill(0).map((_,i)=>`<div class="step-cell" onclick="toggleDrumStep('${id}','bd',${i},this)"></div>`).join('')}</div><input type="range" min="0" max="1" step="0.1" value="0.8" style="width:35px" oninput="nodesRegistry['${id}'].gains.bd=this.value"></div>
+                    <div class="row-flex"><span>SD (808)</span><div class="mini-seq">${Array(8).fill(0).map((_,i)=>`<div class="step-cell" onclick="toggleDrumStep('${id}','sd',${i},this)"></div>`).join('')}</div><input type="range" min="0" max="1" step="0.1" value="0.6" style="width:35px" oninput="nodesRegistry['${id}'].gains.sd=this.value"></div>
+                    <div class="row-flex"><span>HH (808)</span><div class="mini-seq">${Array(8).fill(0).map((_,i)=>`<div class="step-cell" onclick="toggleDrumStep('${id}','hh',${i},this)"></div>`).join('')}</div><input type="range" min="0" max="1" step="0.1" value="0.4" style="width:35px" oninput="nodesRegistry['${id}'].gains.hh=this.value"></div>
+                    <div class="row-flex">BPM: <input type="number" id="bpm_${id}" value="120" style="width:50px"></div>
+                    <button class="btn-act" id="btn_drum_${id}" onclick="triggerDrums('${id}')">PLAY DRUMS ▶</button>`;
+            }
+            else if (type === 'soup') {
+                const filter = audioCtx.createBiquadFilter(); filter.type = 'lowpass'; filter.frequency.value = 1500;
+                const waveshaper = audioCtx.createWaveShaper();
+                audioObj.input.connect(waveshaper); waveshaper.connect(filter); filter.connect(audioObj.output);
+                audioObj.soupFilter = filter; audioObj.soupShaper = waveshaper;
+
+                bodyHTML = `
+                    <div class="row-flex">VISCOSITY: <input type="range" id="soup_visc_${id}" min="1" max="50" value="10" oninput="updateSoupDrive('${id}', this.value)"></div>
+                    <div class="row-flex">TEMP (CUTOFF): <input type="range" id="soup_cut_${id}" min="100" max="6000" value="1500" oninput="nodesRegistry['${id}'].soupFilter.frequency.value=this.value"></div>
+                    <button class="btn-act" id="btn_soup_${id}" style="background:var(--accent-yellow)" onclick="toggleSoupLoop('${id}')">RUN SOUP LOOP 🥣</button>`;
+            }
+            else if (type === 'granular') {
+                audioObj.grainSize = 0.08; audioObj.density = 60;
+                bodyHTML = `
+                    <div class="row-flex">GRAIN SIZE: <input type="range" id="gr_size_${id}" min="0.02" max="0.3" step="0.01" value="0.08" oninput="nodesRegistry['${id}'].grainSize=parseFloat(this.value)"></div>
+                    <div class="row-flex">DENSITY: <input type="range" id="gr_dens_${id}" min="20" max="200" value="60" oninput="nodesRegistry['${id}'].density=parseInt(this.value)"></div>
+                    <button class="btn-act" id="btn_gran_${id}" onclick="toggleGranular('${id}')">START GRANULAR PROCESSING 🔊</button>`;
+            }
+            // 5. Degrader + LFO Visual Modulation
+            else if (type === 'degrader') {
+                const shaper = audioCtx.createWaveShaper();
+                const lpf = audioCtx.createBiquadFilter(); lpf.type = 'lowpass'; lpf.frequency.value = 8000;
+                const lfoOsc = audioCtx.createOscillator(); lfoOsc.frequency.value = 3; lfoOsc.start();
+                const lfoGain = audioCtx.createGain(); lfoGain.gain.value = 0;
+                lfoOsc.connect(lfoGain); lfoGain.connect(lpf.frequency);
+
+                function setQuantizeCurve(bits) {
+                    const steps = Math.pow(2, bits); const n = 4096; const curve = new Float32Array(n);
+                    for (let i = 0; i < n; i++) {
+                        let x = (i / (n - 1)) * 2 - 1;
+                        curve[i] = Math.round(x * steps) / steps;
+                    }
+                    shaper.curve = curve;
+                }
+                setQuantizeCurve(8);
+                audioObj.input.connect(shaper); shaper.connect(lpf); lpf.connect(audioObj.output);
+                audioObj.shaper = shaper; audioObj.lpf = lpf; audioObj.lfoOsc = lfoOsc; audioObj.lfoGain = lfoGain; audioObj.setQuantizeCurve = setQuantizeCurve;
+
+                bodyHTML = `
+                    <canvas class="lfo-scope-canvas" id="lfo_canvas_${id}"></canvas>
+                    <div class="row-flex">BIT DEPTH: <input type="range" min="2" max="16" step="1" value="8" oninput="nodesRegistry['${id}'].setQuantizeCurve(this.value)"></div>
+                    <div class="row-flex">CUTOFF: <input type="range" min="200" max="12000" step="100" value="8000" oninput="nodesRegistry['${id}'].lpf.frequency.value=this.value"></div>
+                    <div class="row-flex">LFO MOD (DEPTH): <input type="range" min="0" max="4000" step="50" value="0" oninput="nodesRegistry['${id}'].lfoGain.gain.value=this.value"></div>`;
+            }
+            // 5. Pitch Shifter + LFO Visual
+            else if (type === 'pitchshift') {
+                const delay = audioCtx.createDelay(); delay.delayTime.value = 0.03;
+                const lfoOsc = audioCtx.createOscillator(); lfoOsc.frequency.value = 5; lfoOsc.start();
+                const lfoGain = audioCtx.createGain(); lfoGain.gain.value = 0;
+                lfoOsc.connect(lfoGain); lfoGain.connect(delay.delayTime);
+
+                audioObj.input.connect(delay); delay.connect(audioObj.output); 
+                audioObj.delay = delay; audioObj.lfoOsc = lfoOsc; audioObj.lfoGain = lfoGain;
+
+                bodyHTML = `
+                    <canvas class="lfo-scope-canvas" id="lfo_canvas_${id}"></canvas>
+                    <div class="row-flex">PITCH SHIFT: <input type="range" min="0.005" max="0.08" step="0.002" value="0.03" oninput="nodesRegistry['${id}'].delay.delayTime.value=this.value"></div>
+                    <div class="row-flex">VIBRATO (LFO): <input type="range" min="0" max="0.01" step="0.0005" value="0" oninput="nodesRegistry['${id}'].lfoGain.gain.value=this.value"></div>`;
+            }
+            else if (type === 'reverb') {
+                const convolver = audioCtx.createConvolver();
+                convolver.buffer = createImpulseBuffer(2.5, 2.0);
+                audioObj.convolver = convolver;
+                audioObj.input.connect(convolver); convolver.connect(audioObj.output);
+                bodyHTML = `<div class="row-flex">ROOM DECAY: <input type="range" min="0.5" max="6" step="0.5" value="2.5" oninput="nodesRegistry['${id}'].convolver.buffer=createImpulseBuffer(this.value, 2.0)"></div>`;
+            }
+            else if (type === 'pingpong') {
+                const delayL = audioCtx.createDelay(); delayL.delayTime.value = 0.3;
+                const delayR = audioCtx.createDelay(); delayR.delayTime.value = 0.6;
+                const fbL = audioCtx.createGain(); fbL.gain.value = 0.5;
+                const fbR = audioCtx.createGain(); fbR.gain.value = 0.5;
+                const merger = audioCtx.createChannelMerger(2);
+
+                audioObj.input.connect(delayL); delayL.connect(fbL); fbL.connect(delayR); delayR.connect(fbR); fbR.connect(delayL);
+                delayL.connect(merger, 0, 0); delayR.connect(merger, 0, 1); merger.connect(audioObj.output);
+                audioObj.delayL = delayL; audioObj.delayR = delayR;
+
+                bodyHTML = `
+                    <div class="row-flex">TIME L: <input type="range" min="0.05" max="1" step="0.05" value="0.3" oninput="nodesRegistry['${id}'].delayL.delayTime.value=this.value"></div>
+                    <div class="row-flex">TIME R: <input type="range" min="0.05" max="1" step="0.05" value="0.6" oninput="nodesRegistry['${id}'].delayR.delayTime.value=this.value"></div>`;
+            }
+            // 9. Dodecaphonic Row + Melody 2 & Accompanyment Buttons
+            else if (type === 'dodeca') {
+                audioObj.playMelody2 = false;
+                audioObj.playAccompany = false;
+                bodyHTML = `
+                    <button class="btn-act" id="btn_dodeca_${id}" style="background:var(--accent-purple); color:#fff" onclick="toggleDodecaLoop('${id}')">RUN DODECA LOOP 🎼</button>
+                    <div class="row-flex" style="margin-top:4px">
+                        <span>MELODY 2</span>
+                        <input type="checkbox" onchange="nodesRegistry['${id}'].playMelody2 = this.checked">
+                    </div>
+                    <div class="row-flex">
+                        <span>ACCOMPANYMENT</span>
+                        <input type="checkbox" onchange="nodesRegistry['${id}'].playAccompany = this.checked">
+                    </div>`;
+            }
+            else if (type === 'chaos') {
+                const filter = audioCtx.createBiquadFilter(); filter.type = 'bandpass'; filter.frequency.value = 800; filter.Q.value = 8;
+                audioObj.input.connect(filter); filter.connect(audioObj.output); audioObj.chaosFilter = filter;
+                bodyHTML = `
+                    <div class="xy-pad" id="xypad_${id}"><div class="xy-pointer" id="xyptr_${id}" style="top:50%; left:50%"></div></div>
+                    <button class="btn-act" id="btn_chaos_${id}" style="background:var(--accent-pink); color:#fff" onclick="toggleChaosLoop('${id}')">RUN CHAOS 🌀</button>`;
+            }
+            // 7. 8-Step Sequencer (Tempo Knob + 8 Active Toggles)
+            else if (type === 'seq') {
+                audioObj.seqSteps = Array(8).fill(true);
+                bodyHTML = `
+                    <div class="row-flex">TEMPO (BPM): <input type="range" id="seq_bpm_${id}" min="60" max="300" value="140"></div>
+                    <div class="row-flex" style="margin:4px 0">
+                        <span>STEPS:</span>
+                        <div class="mini-seq">
+                            ${Array(8).fill(0).map((_,i)=>`<div class="step-cell active" id="seq_cell_${id}_${i}" onclick="toggleSeqStep('${id}',${i},this)"></div>`).join('')}
+                        </div>
+                    </div>
+                    <button class="btn-act" id="btn_seq_${id}" onclick="triggerSeq('${id}')">RUN SEQUENCER ▶</button>`;
+            }
+            else if (type === 'filter') {
+                const flt = audioCtx.createBiquadFilter(); flt.type = 'lowpass'; flt.frequency.value = 1000;
+                audioObj.input.connect(flt); flt.connect(audioObj.output); audioObj.flt = flt;
+
+                bodyHTML = `
+                    <div class="row-flex">CUTOFF: <input type="range" min="50" max="8000" value="1000" oninput="nodesRegistry['${id}'].flt.frequency.value=this.value"></div>
+                    <div class="row-flex">RES: <input type="range" min="0" max="20" value="1" oninput="nodesRegistry['${id}'].flt.Q.value=this.value"></div>`;
+            }
+            else if (type === 'delay') {
+                const delay = audioCtx.createDelay(); delay.delayTime.value = 0.3;
+                const fb = audioCtx.createGain(); fb.gain.value = 0.4;
+                audioObj.input.connect(delay); delay.connect(fb); fb.connect(delay); delay.connect(audioObj.output);
+                audioObj.delay = delay; audioObj.fb = fb;
+                bodyHTML = `
+                    <div class="row-flex">TIME: <input type="range" min="0.05" max="1" step="0.05" value="0.3" oninput="nodesRegistry['${id}'].delay.delayTime.value=this.value"></div>
+                    <div class="row-flex">FEEDBACK: <input type="range" min="0" max="0.9" step="0.05" value="0.4" oninput="nodesRegistry['${id}'].fb.gain.value=this.value"></div>`;
+            }
+            else if (type === 'mixer') {
+                audioObj.channels = [];
+                bodyHTML = `<button class="btn-act" onclick="addMixerChannel('${id}')">+ Add Channel</button><div id="mix_chans_${id}"></div>`;
+            }
+            else if (type === 'master') {
+                const masterGain = audioCtx.createGain(); masterGain.gain.value = 0.8;
+                audioObj.input.connect(masterGain); masterGain.connect(analyserNode); masterGain.connect(audioCtx.destination);
+                audioObj.masterGain = masterGain;
+                bodyHTML = `
+                    <div style="color:var(--accent-pink); font-weight:bold; text-align:center;">MAIN OUTPUT</div>
+                    <div class="row-flex">MASTER VOL: <input type="range" min="0" max="1" step="0.01" value="0.8" oninput="nodesRegistry['${id}'].masterGain.gain.value=this.value"></div>`;
+            }
+
+            // 4. כפתורי ערכת צבעים/נושא לכל תיבה
+            node.innerHTML = `
+                <div class="node-header">
+                    <span>${type.toUpperCase()}</span>
+                    <span class="close-btn" onclick="removeNode('${id}')">✕</span>
+                </div>
+                <div class="node-body">
+                    <div class="ports-header">
+                        <div class="port-group"><div class="port in" id="in_${id}" data-node="${id}"></div> IN</div>
+                        <div class="port-group">OUT <div class="port out" id="out_${id}" data-node="${id}"></div></div>
+                    </div>
+                    ${bodyHTML}
+                    <div class="theme-btn-group">
+                        <button class="theme-btn" onclick="setNodeTheme('${id}','dark')">כהה</button>
+                        <button class="theme-btn" onclick="setNodeTheme('${id}','light')">בהיר</button>
+                        <button class="theme-btn" onclick="setNodeTheme('${id}','random')">אקראי</button>
+                    </div>
+                </div>`;
+
+            world.appendChild(node);
+            nodesRegistry[id] = audioObj;
+            makeDraggable(node);
+            initPorts(node);
+
+            if (type === 'ribbon') initRibbon(id);
+            if (type === 'visualeq') initVisualEQ(id);
+            if (type === 'lfo' || type === 'degrader' || type === 'pitchshift') initLfoScope(id);
+            if (type === 'chaos') initXYPad(id);
+            if (type === 'mixer') addMixerChannel(id);
+            return id;
+        }
+
+        // 2. אתחול Ribbon Synthesizer
+        function initRibbon(id) {
+            setTimeout(() => {
+                const bar = document.getElementById(`ribbon_bar_${id}`);
+                if (!bar) return;
+                const nObj = nodesRegistry[id];
+
+                const playRibbon = (e) => {
+                    const rect = bar.getBoundingClientRect();
+                    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+                    let normX = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+                    let freq = 130.81 * Math.pow(2, normX * 3); // 3 Octaves (C3 -> C6)
+                    nObj.osc.frequency.setTargetAtTime(freq, audioCtx.currentTime, 0.01);
+                    nObj.gain.gain.setTargetAtTime(0.5, audioCtx.currentTime, 0.01);
+                };
+
+                const stopRibbon = () => {
+                    if (!nObj.isHold) {
+                        nObj.gain.gain.setTargetAtTime(0, audioCtx.currentTime, 0.05);
+                    }
+                };
+
+                bar.onmousedown = (e) => { playRibbon(e); };
+                bar.onmousemove = (e) => { if (e.buttons === 1) playRibbon(e); };
+                bar.onmouseup = stopRibbon;
+                bar.onmouseleave = stopRibbon;
+
+                bar.addEventListener('touchstart', (e) => { e.preventDefault(); playRibbon(e); }, { passive: false });
+                bar.addEventListener('touchmove', (e) => { e.preventDefault(); playRibbon(e); }, { passive: false });
+                bar.addEventListener('touchend', stopRibbon);
+            }, 50);
+        }
+
+        // 5. ויזואליזציה של גל LFO בזמן אמת
+        function initLfoScope(id) {
+            setTimeout(() => {
+                const canvas = document.getElementById(`lfo_canvas_${id}`);
+                if (!canvas) return;
+                const ctx = canvas.getContext('2d');
+                let phase = 0;
+
+                function renderLfo() {
+                    if (!nodesRegistry[id]) return;
+                    requestAnimationFrame(renderLfo);
+                    ctx.fillStyle = '#08090c'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+                    ctx.strokeStyle = '#00e676'; ctx.lineWidth = 1.5; ctx.beginPath();
+
+                    let rate = 2;
+                    if (nodesRegistry[id].lfoOsc) rate = nodesRegistry[id].lfoOsc.frequency.value;
+                    phase += rate * 0.05;
+
+                    for (let x = 0; x < canvas.width; x++) {
+                        let y = (canvas.height / 2) + Math.sin(phase + (x * 0.1)) * (canvas.height / 3);
+                        if (x === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+                    }
+                    ctx.stroke();
+                }
+                renderLfo();
+            }, 50);
+        }
+
+        // 6. Visual EQ - גרף 3 נקודות גרירה, עקומה וסינוס תדרים
+        function initVisualEQ(id) {
+            setTimeout(() => {
+                const canvas = document.getElementById(`eq_canvas_${id}`);
+                if (!canvas) return;
+                const ctx = canvas.getContext('2d');
+                const nObj = nodesRegistry[id];
+                const analyser = nObj.eqAnalyser;
+                const bufferLength = analyser.frequencyBinCount;
+                const dataArray = new Uint8Array(bufferLength);
+
+                let draggingPoint = null;
+
+                function drawEQ() {
+                    if (!nodesRegistry[id]) return;
+                    requestAnimationFrame(drawEQ);
+                    analyser.getByteFrequencyData(dataArray);
+
+                    ctx.fillStyle = '#08090c'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                    // גל סינוס לתדרים
+                    ctx.strokeStyle = 'rgba(0, 240, 255, 0.2)'; ctx.lineWidth = 1; ctx.beginPath();
+                    for (let i = 0; i < bufferLength; i++) {
+                        let x = (i / bufferLength) * canvas.width;
+                        let y = canvas.height - ((dataArray[i] / 255) * canvas.height);
+                        if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+                    }
+                    ctx.stroke();
+
+                    // עקומת EQ
+                    const lowY = canvas.height / 2 - (nObj.low.gain.value * 1.2);
+                    const midY = canvas.height / 2 - (nObj.mid.gain.value * 1.2);
+                    const highY = canvas.height / 2 - (nObj.high.gain.value * 1.2);
+
+                    const pLow = { x: canvas.width * 0.2, y: Math.max(5, Math.min(canvas.height - 5, lowY)) };
+                    const pMid = { x: canvas.width * 0.5, y: Math.max(5, Math.min(canvas.height - 5, midY)) };
+                    const pHigh = { x: canvas.width * 0.8, y: Math.max(5, Math.min(canvas.height - 5, highY)) };
+
+                    ctx.strokeStyle = '#ffe600'; ctx.lineWidth = 2; ctx.beginPath();
+                    ctx.moveTo(0, pLow.y);
+                    ctx.quadraticCurveTo(pLow.x, pLow.y, pMid.x, pMid.y);
+                    ctx.quadraticCurveTo(pHigh.x, pHigh.y, canvas.width, pHigh.y);
+                    ctx.stroke();
+
+                    // 3 נקודות גרירה
+                    [pLow, pMid, pHigh].forEach((p, idx) => {
+                        ctx.fillStyle = idx === 0 ? '#ff2a74' : (idx === 1 ? '#ffe600' : '#00f0ff');
+                        ctx.beginPath(); ctx.arc(p.x, p.y, 5, 0, Math.PI * 2); ctx.fill();
+                    });
+                }
+                drawEQ();
+
+                // גרירת הנקודות בגרף ה-EQ
+                const handlePointer = (e) => {
+                    const rect = canvas.getBoundingClientRect();
+                    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+                    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+                    const relX = clientX - rect.left;
+                    const relY = clientY - rect.top;
+
+                    let normGain = Math.max(-24, Math.min(24, (canvas.height / 2 - relY) / 1.2));
+
+                    if (draggingPoint === 'low' || relX < canvas.width * 0.35) {
+                        nObj.low.gain.value = normGain;
+                        document.getElementById(`eq_low_${id}`).value = normGain;
+                    } else if (draggingPoint === 'mid' || (relX >= canvas.width * 0.35 && relX < canvas.width * 0.65)) {
+                        nObj.mid.gain.value = normGain;
+                        document.getElementById(`eq_mid_${id}`).value = normGain;
+                    } else {
+                        nObj.high.gain.value = normGain;
+                        document.getElementById(`eq_high_${id}`).value = normGain;
+                    }
+                };
+
+                canvas.onmousedown = (e) => { draggingPoint = true; handlePointer(e); };
+                window.addEventListener('mousemove', (e) => { if (draggingPoint) handlePointer(e); });
+                window.addEventListener('mouseup', () => { draggingPoint = null; });
+            }, 50);
+        }
+
+        function createImpulseBuffer(duration, decay) {
+            const sampleRate = audioCtx.sampleRate;
+            const length = sampleRate * duration;
+            const impulse = audioCtx.createBuffer(2, length, sampleRate);
+            const left = impulse.getChannelData(0); const right = impulse.getChannelData(1);
+            for (let i = 0; i < length; i++) {
+                let n = length - i;
+                left[i] = (Math.random() * 2 - 1) * Math.pow(n / length, decay);
+                right[i] = (Math.random() * 2 - 1) * Math.pow(n / length, decay);
+            }
+            return impulse;
+        }
+
+        function toggleChaosLoop(nodeId) {
+            let nObj = nodesRegistry[nodeId];
+            let btn = document.getElementById(`btn_chaos_${nodeId}`);
+            if (nObj.isPlaying) { nObj.isPlaying = false; btn.innerText = "RUN CHAOS 🌀"; return; }
+            nObj.isPlaying = true; btn.innerText = "STOP CHAOS ⏹";
+
+            function chaosStep() {
+                if (!nObj.isPlaying) return;
+                const pad = document.getElementById(`xypad_${nodeId}`);
+                const ptr = document.getElementById(`xyptr_${nodeId}`);
+                if (pad && ptr) {
+                    const rx = Math.random() * pad.clientWidth;
+                    const ry = Math.random() * pad.clientHeight;
+                    ptr.style.left = rx + 'px'; ptr.style.top = ry + 'px';
+                    const normX = rx / pad.clientWidth; const normY = 1 - (ry / pad.clientHeight);
+                    nObj.chaosFilter.frequency.value = normX * 5000 + 100;
+                    nObj.chaosFilter.Q.value = normY * 30 + 0.5;
+                }
+                setTimeout(chaosStep, 150);
+            }
+            chaosStep();
+        }
+
+        function toggleSoupLoop(nodeId) {
+            let nObj = nodesRegistry[nodeId];
+            let btn = document.getElementById(`btn_soup_${nodeId}`);
+            if (nObj.isPlaying) { nObj.isPlaying = false; btn.innerText = "RUN SOUP LOOP 🥣"; return; }
+            nObj.isPlaying = true; btn.innerText = "STOP SOUP LOOP ⏹";
+
+            function soupLoop() {
+                if (!nObj.isPlaying) return;
+                const rndDrive = Math.floor(Math.random() * 45) + 1;
+                const rndCut = Math.floor(Math.random() * 5000) + 200;
+                document.getElementById(`soup_visc_${nodeId}`).value = rndDrive;
+                document.getElementById(`soup_cut_${nodeId}`).value = rndCut;
+                updateSoupDrive(nodeId, rndDrive);
+                nObj.soupFilter.frequency.value = rndCut;
+                playSound(nodeId, 150 + Math.random() * 600, 0.2);
+                setTimeout(soupLoop, 200);
+            }
+            soupLoop();
+        }
+
+        // 9. Dodecaphonic Row + Melody 2 & Accompanyment
+        function toggleDodecaLoop(nodeId) {
+            let nObj = nodesRegistry[nodeId];
+            let btn = document.getElementById(`btn_dodeca_${nodeId}`);
+            if (nObj.isPlaying) { nObj.isPlaying = false; btn.innerText = "RUN DODECA LOOP 🎼"; return; }
+            nObj.isPlaying = true; btn.innerText = "STOP DODECA ⏹";
+
+            const baseNotes = [261.63, 277.18, 293.66, 311.13, 329.63, 349.23, 369.99, 392.00, 415.30, 440.00, 466.16, 493.88];
+            let currentSeries = [];
+
+            function nextNote() {
+                if (!nObj.isPlaying) return;
+                if (currentSeries.length === 0) currentSeries = [...baseNotes].sort(() => Math.random() - 0.5);
+                const freq = currentSeries.pop();
+                
+                playSound(nodeId, freq, 0.15);
+                
+                if (nObj.playMelody2) {
+                    setTimeout(() => playSound(nodeId, freq * 1.5, 0.12), 75); // קווינטה
+                }
+                if (nObj.playAccompany) {
+                    playSound(nodeId, freq * 0.5, 0.3); // אוקטבה למטה
+                }
+
+                setTimeout(nextNote, 150);
+            }
+            nextNote();
+        }
+
+        function toggleGranular(nodeId) {
+            let nObj = nodesRegistry[nodeId];
+            let btn = document.getElementById(`btn_gran_${nodeId}`);
+            if (nObj.isPlaying) { nObj.isPlaying = false; btn.innerText = "START GRANULAR PROCESSING 🔊"; return; }
+            nObj.isPlaying = true; btn.innerText = "STOP GRANULAR ⏹";
+
+            function grainLoop() {
+                if (!nObj.isPlaying) return;
+                const size = nObj.grainSize || 0.08; const dens = nObj.density || 60;
+                const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
+                osc.frequency.value = 100 + Math.random() * 800;
+                gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + size);
+                osc.connect(gain); gain.connect(nObj.output);
+                osc.start(); osc.stop(audioCtx.currentTime + size);
+                setTimeout(grainLoop, Math.max(20, 10000 / dens));
+            }
+            grainLoop();
+        }
+
+        function initXYPad(nodeId) {
+            setTimeout(() => {
+                const pad = document.getElementById(`xypad_${nodeId}`);
+                const ptr = document.getElementById(`xyptr_${nodeId}`);
+                if (!pad) return;
+
+                const updateXY = (e) => {
+                    const rect = pad.getBoundingClientRect();
+                    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+                    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+
+                    let x = Math.max(0, Math.min(clientX - rect.left, rect.width));
+                    let y = Math.max(0, Math.min(clientY - rect.top, rect.height));
+
+                    ptr.style.left = x + 'px'; ptr.style.top = y + 'px';
+                    const normX = x / rect.width; const normY = 1 - (y / rect.height);
+
+                    if (nodesRegistry[nodeId] && nodesRegistry[nodeId].chaosFilter) {
+                        nodesRegistry[nodeId].chaosFilter.frequency.value = normX * 4000 + 100;
+                        nodesRegistry[nodeId].chaosFilter.Q.value = normY * 25 + 0.5;
+                    }
+                };
+
+                let isInteracting = false;
+                pad.onmousedown = (e) => { isInteracting = true; updateXY(e); };
+                window.addEventListener('mousemove', (e) => { if (isInteracting) updateXY(e); });
+                window.addEventListener('mouseup', () => { isInteracting = false; });
+                
+                pad.addEventListener('touchstart', (e) => { isInteracting = true; updateXY(e); }, {passive: false});
+                window.addEventListener('touchmove', (e) => { if (isInteracting) { e.preventDefault(); updateXY(e); } }, {passive: false});
+                window.addEventListener('touchend', () => { isInteracting = false; });
+            }, 50);
+        }
+
+        function updateSoupDrive(nodeId, val) {
+            if (!nodesRegistry[nodeId] || !nodesRegistry[nodeId].soupShaper) return;
+            const k = parseFloat(val); const n_samples = 44100; const curve = new Float32Array(n_samples); const deg = Math.PI / 180;
+            for (let i = 0; i < n_samples; ++i) {
+                let x = (i * 2) / n_samples - 1;
+                curve[i] = ((3 + k) * x * 20 * deg) / (Math.PI + k * Math.abs(x));
+            }
+            nodesRegistry[nodeId].soupShaper.curve = curve;
+        }
+
+        function removeNode(nodeId) {
+            for (let i = activeCables.length - 1; i >= 0; i--) {
+                const c = activeCables[i];
+                if (c.fromNodeId === nodeId || c.toNodeId === nodeId) removeCable(c);
+            }
+            if (nodesRegistry[nodeId]) {
+                nodesRegistry[nodeId].isPlaying = false;
+                try { nodesRegistry[nodeId].input.disconnect(); } catch(e){}
+                try { nodesRegistry[nodeId].output.disconnect(); } catch(e){}
+                delete nodesRegistry[nodeId];
+            }
+            const el = document.getElementById(nodeId);
+            if (el) el.remove();
+        }
+
+        let mixChanCounter = 0;
+        function addMixerChannel(nodeId) {
+            mixChanCounter++;
+            const chanId = `ch_${mixChanCounter}`;
+            const container = document.getElementById(`mix_chans_${nodeId}`);
+            const chanGain = audioCtx.createGain();
+            const chanEQ = audioCtx.createBiquadFilter();
+            chanEQ.type = "peaking"; chanEQ.frequency.value = 1000; chanEQ.gain.value = 0;
+            chanEQ.connect(chanGain); chanGain.connect(nodesRegistry[nodeId].output);
+
+            const chanObj = { inPortId: `in_${chanId}`, gainNode: chanGain, eqNode: chanEQ };
+            nodesRegistry[nodeId].channels.push(chanObj);
+
+            const chanEl = document.createElement('div');
+            chanEl.className = 'mixer-channel';
+            chanEl.innerHTML = `
+                <div class="row-flex">
+                    <span style="color:var(--accent-yellow)">CH ${nodesRegistry[nodeId].channels.length}</span>
+                    <div class="port in" id="${chanObj.inPortId}" data-node="${nodeId}" data-chanindex="${nodesRegistry[nodeId].channels.length-1}"></div>
+                </div>
+                <div class="row-flex">VOL <input type="range" min="0" max="1" step="0.01" value="0.8" oninput="nodesRegistry['${nodeId}'].channels[${nodesRegistry[nodeId].channels.length-1}].gainNode.gain.value=this.value"></div>`;
+            
+            container.appendChild(chanEl);
+            initPorts(chanEl);
+        }
+
+        function toggleDrumStep(nodeId, type, idx, el) {
+            nodesRegistry[nodeId].steps[type][idx] = !nodesRegistry[nodeId].steps[type][idx];
+            el.classList.toggle('active');
+        }
+
+        // 8. Drum Machine (סאונדים של 808 - Bass Drum, Snare, HiHat)
+        function triggerDrums(nodeId) {
+            let nObj = nodesRegistry[nodeId];
+            let btn = document.getElementById(`btn_drum_${nodeId}`);
+            if (nObj.isPlaying) { 
+                nObj.isPlaying = false; 
+                btn.innerText = "PLAY DRUMS ▶"; btn.style.background = "var(--accent-cyan)";
+                return; 
+            }
+            nObj.isPlaying = true; btn.innerText = "STOP DRUMS ⏹"; btn.style.background = "var(--accent-red)";
+            let step = 0;
+
+            function playKick808() {
+                let osc = audioCtx.createOscillator(); let gain = audioCtx.createGain();
+                osc.frequency.setValueAtTime(150, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(35, audioCtx.currentTime + 0.35);
+                gain.gain.setValueAtTime(nObj.gains.bd, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.35);
+                osc.connect(gain); gain.connect(nObj.output);
+                osc.start(); osc.stop(audioCtx.currentTime + 0.35);
+            }
+
+            function playSnare808() {
+                let osc = audioCtx.createOscillator(); osc.type = 'triangle';
+                osc.frequency.setValueAtTime(180, audioCtx.currentTime);
+                let oscGain = audioCtx.createGain(); oscGain.gain.setValueAtTime(nObj.gains.sd, audioCtx.currentTime);
+                oscGain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+                osc.connect(oscGain); oscGain.connect(nObj.output);
+                osc.start(); osc.stop(audioCtx.currentTime + 0.1);
+
+                let noiseBuffer = audioCtx.createBuffer(1, audioCtx.sampleRate * 0.2, audioCtx.sampleRate);
+                let output = noiseBuffer.getChannelData(0);
+                for (let i = 0; i < noiseBuffer.length; i++) output[i] = Math.random() * 2 - 1;
+                let whiteNoise = audioCtx.createBufferSource(); whiteNoise.buffer = noiseBuffer;
+                let filter = audioCtx.createBiquadFilter(); filter.type = 'highpass'; filter.frequency.value = 1000;
+                let envelope = audioCtx.createGain(); envelope.gain.setValueAtTime(nObj.gains.sd * 0.7, audioCtx.currentTime);
+                envelope.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
+                whiteNoise.connect(filter); filter.connect(envelope); envelope.connect(nObj.output);
+                whiteNoise.start(); whiteNoise.stop(audioCtx.currentTime + 0.2);
+            }
+
+            function playHiHat808() {
+                let noiseBuffer = audioCtx.createBuffer(1, audioCtx.sampleRate * 0.05, audioCtx.sampleRate);
+                let output = noiseBuffer.getChannelData(0);
+                for (let i = 0; i < noiseBuffer.length; i++) output[i] = Math.random() * 2 - 1;
+                let whiteNoise = audioCtx.createBufferSource(); whiteNoise.buffer = noiseBuffer;
+                let filter = audioCtx.createBiquadFilter(); filter.type = 'highpass'; filter.frequency.value = 7500;
+                let envelope = audioCtx.createGain(); envelope.gain.setValueAtTime(nObj.gains.hh, audioCtx.currentTime);
+                envelope.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.05);
+                whiteNoise.connect(filter); filter.connect(envelope); envelope.connect(nObj.output);
+                whiteNoise.start(); whiteNoise.stop(audioCtx.currentTime + 0.05);
+            }
+
+            function run() {
+                if(!nObj.isPlaying) return;
+                const bpm = parseInt(document.getElementById(`bpm_${nodeId}`).value) || 120;
+                const st = nObj.steps;
+
+                const nodeEl = document.getElementById(nodeId);
+                if (nodeEl) {
+                    nodeEl.querySelectorAll('.step-cell').forEach((c, idx) => {
+                        if (idx % 8 === step) c.classList.add('playing');
+                        else c.classList.remove('playing');
+                    });
+                }
+
+                if(st.bd[step]) playKick808();
+                if(st.sd[step]) playSnare808();
+                if(st.hh[step]) playHiHat808();
+                step = (step + 1) % 8;
+                setTimeout(run, (60000 / bpm) / 4);
+            }
+            run();
+        }
+
+        function playSound(nodeId, freq, dur) {
+            if (!nodesRegistry[nodeId]) return;
+            let osc = audioCtx.createOscillator(); let g = audioCtx.createGain();
+            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + dur);
+            g.gain.setValueAtTime(0.4, audioCtx.currentTime);
+            osc.connect(g); g.connect(nodesRegistry[nodeId].output);
+            osc.start(); osc.stop(audioCtx.currentTime + dur);
+        }
+
+        // 7. 8-Step Sequencer
+        function toggleSeqStep(nodeId, idx, el) {
+            nodesRegistry[nodeId].seqSteps[idx] = !nodesRegistry[nodeId].seqSteps[idx];
+            el.classList.toggle('active');
+        }
+
+        function triggerSeq(nodeId) {
+            let nObj = nodesRegistry[nodeId];
+            let btn = document.getElementById(`btn_seq_${nodeId}`);
+            if (nObj.isPlaying) { 
+                nObj.isPlaying = false; btn.innerText = "RUN SEQUENCER ▶"; btn.style.background = "var(--accent-cyan)";
+                return; 
+            }
+            nObj.isPlaying = true; btn.innerText = "STOP SEQUENCER ⏹"; btn.style.background = "var(--accent-red)";
+            let idx = 0; const freqs = [220, 247, 277, 293, 329, 370, 415, 440];
+            function loop() {
+                if (!nObj.isPlaying) return;
+                const bpm = parseInt(document.getElementById(`seq_bpm_${nodeId}`).value) || 140;
+                
+                // היילייט ויזואלי לצעדים
+                for(let i=0; i<8; i++) {
+                    let cell = document.getElementById(`seq_cell_${nodeId}_${i}`);
+                    if (cell) {
+                        if (i === idx) cell.classList.add('playing');
+                        else cell.classList.remove('playing');
+                    }
+                }
+
+                if (nObj.seqSteps[idx]) {
+                    playSound(nodeId, freqs[idx], 0.1);
+                }
+
+                idx = (idx + 1) % freqs.length;
+                setTimeout(loop, (60000 / bpm) / 2);
+            }
+            loop();
+        }
+
+        function makeDraggable(node) {
+            const header = node.querySelector('.node-header');
+            const startDrag = (e) => {
+                if (e.target.classList.contains('close-btn')) return;
+                e.stopPropagation();
+                
+                const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+                const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+                let startLeft = parseFloat(node.style.left);
+                let startTop = parseFloat(node.style.top);
+
+                function moveAt(cx, cy) {
+                    let dx = (cx - clientX) / scale;
+                    let dy = (cy - clientY) / scale;
+                    node.style.left = (startLeft + dx) + 'px';
+                    node.style.top = (startTop + dy) + 'px';
+                    updateCables();
+                }
+
+                function onMove(e) {
+                    if (e.cancelable) e.preventDefault();
+                    const cx = e.touches ? e.touches[0].clientX : e.clientX;
+                    const cy = e.touches ? e.touches[0].clientY : e.clientY;
+                    moveAt(cx, cy);
+                }
+
+                window.addEventListener('mousemove', onMove);
+                window.addEventListener('touchmove', onMove, { passive: false });
+
+                const stopDrag = () => {
+                    window.removeEventListener('mousemove', onMove);
+                    window.removeEventListener('touchmove', onMove);
+                };
+                window.onmouseup = stopDrag;
+                window.ontouchend = stopDrag;
+            };
+
+            header.onmousedown = startDrag;
+            header.ontouchstart = startDrag;
+        }
+
+        let draggingCable = null;
+        function initPorts(scope) {
+            scope.querySelectorAll('.port').forEach(port => {
+                const startCable = (e) => {
+                    e.stopPropagation();
+                    if (e.cancelable) e.preventDefault();
+
+                    if (port.classList.contains('out')) {
+                        const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                        path.setAttribute('class', 'cable dragging');
+                        document.getElementById('svgCanvas').appendChild(path);
+
+                        draggingCable = {
+                            fromPortId: port.id,
+                            fromNodeId: port.dataset.node,
+                            path: path
+                        };
+                    }
+                };
+                port.onmousedown = startCable;
+                port.ontouchstart = startCable;
             });
         }
 
-        card.querySelector('#dodec-main').onclick = () => playSeries(series, 1);
-        card.querySelector('#dodec-sec').onclick = () => {
-            // היפוך מנגינה (Inversion)
-            const inverted = series.map(n => (12 - n) % 12);
-            playSeries(inverted, 1.5);
+        const handleMove = (e) => {
+            if (draggingCable) {
+                if (e.cancelable) e.preventDefault();
+                const cx = e.touches ? e.touches[0].clientX : e.clientX;
+                const cy = e.touches ? e.touches[0].clientY : e.clientY;
+                const p1 = getPortWorldCenter(document.getElementById(draggingCable.fromPortId));
+                
+                const viewportRect = viewport.getBoundingClientRect();
+                const targetX = (cx - viewportRect.left - panX) / scale;
+                const targetY = (cy - viewportRect.top - panY) / scale;
+
+                drawBezier(draggingCable.path, p1.x, p1.y, targetX, targetY);
+            }
         };
-        card.querySelector('#dodec-acc').onclick = () => {
-            // ליווי באוקטבה נמוכה
-            playSeries(series, 0.5);
+        window.addEventListener('mousemove', handleMove);
+        window.addEventListener('touchmove', handleMove, { passive: false });
+
+        const handleEnd = (e) => {
+            if (draggingCable) {
+                const cx = e.changedTouches ? e.changedTouches[0].clientX : e.clientX;
+                const cy = e.changedTouches ? e.changedTouches[0].clientY : e.clientY;
+                
+                const targetPort = document.elementFromPoint(cx, cy);
+
+                if (targetPort && targetPort.classList.contains('in')) {
+                    const toNodeId = targetPort.dataset.node;
+                    const chanIdx = targetPort.dataset.chanindex;
+                    const fromNodeObj = nodesRegistry[draggingCable.fromNodeId];
+                    const toNodeObj = nodesRegistry[toNodeId];
+
+                    let targetAudio = toNodeObj.input;
+
+                    if (fromNodeObj.isModulator) {
+                        if (toNodeObj.type === 'filter') {
+                            targetAudio = toNodeObj.flt.detune;
+                        } else if (toNodeObj.type === 'osc' || toNodeObj.type === 'ribbon') {
+                            targetAudio = toNodeObj.osc.detune;
+                        } else {
+                            draggingCable.path.remove();
+                            draggingCable = null;
+                            return;
+                        }
+                    } else if (chanIdx !== undefined) {
+                        targetAudio = toNodeObj.channels[chanIdx].eqNode;
+                    }
+
+                    fromNodeObj.output.connect(targetAudio);
+                    draggingCable.path.classList.remove('dragging');
+
+                    const cableObj = {
+                        fromPortId: draggingCable.fromPortId,
+                        toPortId: targetPort.id,
+                        fromNodeId: draggingCable.fromNodeId,
+                        toNodeId: toNodeId,
+                        path: draggingCable.path,
+                        srcAudio: fromNodeObj.output,
+                        targetAudio: targetAudio
+                    };
+
+                    draggingCable.path.onclick = () => removeCable(cableObj);
+                    draggingCable.path.ontouchstart = (e) => { e.stopPropagation(); removeCable(cableObj); };
+
+                    activeCables.push(cableObj);
+                    updateCables();
+                } else {
+                    draggingCable.path.remove();
+                }
+                draggingCable = null;
+            }
         };
-    }
-</script>
+        window.addEventListener('mouseup', handleEnd);
+        window.addEventListener('touchend', handleEnd);
+
+        function removeCable(cableObj) {
+            try { cableObj.srcAudio.disconnect(cableObj.targetAudio); } catch(e){}
+            cableObj.path.remove();
+            const idx = activeCables.indexOf(cableObj);
+            if(idx > -1) activeCables.splice(idx, 1);
+        }
+
+        function getPortWorldCenter(elem) {
+            if (!elem) return { x: 0, y: 0 };
+            const box = elem.getBoundingClientRect();
+            const viewportRect = viewport.getBoundingClientRect();
+            const screenX = box.left + box.width / 2 - viewportRect.left;
+            const screenY = box.top + box.height / 2 - viewportRect.top;
+            return {
+                x: (screenX - panX) / scale,
+                y: (screenY - panY) / scale
+            };
+        }
+
+        function drawBezier(path, x1, y1, x2, y2) {
+            const ox = 50000; const oy = 50000;
+            const wx1 = x1 + ox; const wy1 = y1 + oy;
+            const wx2 = x2 + ox; const wy2 = y2 + oy;
+            const dx = Math.abs(wx2 - wx1) * 0.5;
+            path.setAttribute('d', `M ${wx1} ${wy1} C ${wx1 + dx} ${wy1}, ${wx2 - dx} ${wy2}, ${wx2} ${wy2}`);
+        }
+
+        function updateCables() {
+            activeCables.forEach(c => {
+                const p1Elem = document.getElementById(c.fromPortId);
+                const p2Elem = document.getElementById(c.toPortId);
+                if (p1Elem && p2Elem) {
+                    const p1 = getPortWorldCenter(p1Elem);
+                    const p2 = getPortWorldCenter(p2Elem);
+                    drawBezier(c.path, p1.x, p1.y, p2.x, p2.y);
+                }
+            });
+        }
+
+        function clearCanvas() {
+            Object.keys(nodesRegistry).forEach(id => removeNode(id));
+            document.querySelectorAll('.node').forEach(n => n.remove());
+            document.querySelectorAll('path.cable').forEach(c => c.remove());
+            activeCables.length = 0;
+
+            if (audioCtx) {
+                audioCtx.close();
+                audioCtx = null;
+            }
+        }
+
+        function loadPreset() {
+            clearCanvas();
+            setTimeout(() => {
+                createNode('osc', 100, 100);
+                createNode('lfo', 100, 280);
+                createNode('visualeq', 420, 100);
+                createNode('master', 740, 100);
+            }, 50);
+        }
+    </script>
 </body>
 </html>
