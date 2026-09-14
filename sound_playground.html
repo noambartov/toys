@@ -442,8 +442,8 @@
             } else if (theme === 'random') {
                 nodeEl.classList.add('theme-random');
                 const randomHue = Math.floor(Math.random() * 360);
-                const randomSat = Math.floor(Math.random() * 30) + 70; // 70-100%
-                const randomLight = Math.floor(Math.random() * 20) + 50; // 50-70%
+                const randomSat = Math.floor(Math.random() * 30) + 70;
+                const randomLight = Math.floor(Math.random() * 20) + 50;
                 nodeEl.style.borderColor = `hsl(${randomHue}, ${randomSat}%, ${randomLight}%)`;
                 nodeEl.style.boxShadow = `0 10px 25px hsl(${randomHue}, ${randomSat}%, 20%)`;
             } else {
