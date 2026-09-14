@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="he" dir="ltr">
+<html lang="en" dir="ltr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
@@ -20,10 +20,18 @@
             --text-muted: #626c80;
         }
 
+        /* Light Grid Theme */
+        body.grid-light-theme #viewport {
+            background-color: #e5e9f0 !important;
+        }
+        body.grid-light-theme .infinite-grid {
+            background-image: linear-gradient(rgba(0, 0, 0, 0.1) 1px, transparent 1px), 
+                              linear-gradient(90deg, rgba(0, 0, 0, 0.1) 1px, transparent 1px) !important;
+        }
+
         html, body {
             width: 100vw; height: 100vh;
             overflow: hidden; 
-            touch-action: none;
             -webkit-touch-callout: none;
             -webkit-user-select: none;
             user-select: none;
@@ -40,8 +48,9 @@
             width: 250px; min-width: 250px; background: var(--sidebar-bg);
             border-right: 1px solid var(--border-color);
             display: flex; flex-direction: column;
-            padding: 15px 12px; gap: 8px; z-index: 100; overflow-y: auto;
-            touch-action: pan-y;
+            padding: 15px 12px; gap: 8px; z-index: 100; 
+            overflow-y: auto !important; 
+            touch-action: pan-y !important;
             -webkit-overflow-scrolling: touch;
         }
 
@@ -49,18 +58,21 @@
         .brand-logo span { color: var(--accent-pink); }
         .category-title { font-size: 9px; font-weight: 800; color: var(--text-muted); letter-spacing: 1px; text-transform: uppercase; margin-top: 6px; }
 
-        .spawn-btn {
+        .spawn-btn, .grid-toggle-btn {
             background: #1c1f2b; border: 1px solid var(--border-color);
             color: var(--text-main); padding: 8px 10px; border-radius: 6px;
             font-size: 11px; font-weight: 600; text-align: left; cursor: pointer;
             transition: all 0.15s ease;
             touch-action: manipulation;
+            flex-shrink: 0;
         }
-        .spawn-btn:hover { border-color: var(--accent-cyan); color: var(--accent-cyan); background: #222636; }
+        .spawn-btn:hover, .grid-toggle-btn:hover { border-color: var(--accent-cyan); color: var(--accent-cyan); background: #222636; }
+        .grid-toggle-btn { text-align: center; background: #242836; font-weight: 700; margin-bottom: 6px; }
 
         #viewport {
             flex: 1; position: relative; overflow: hidden;
             background-color: var(--bg-dark); cursor: grab; touch-action: none;
+            transition: background-color 0.2s ease;
         }
         #viewport.panning { cursor: grabbing; }
 
@@ -118,7 +130,6 @@
         path.cable.dragging { pointer-events: none; }
         path.cable:hover { stroke: var(--accent-red); stroke-width: 6; }
 
-        /* סגנונות נושא לתיבות (Themes) */
         .node {
             position: absolute; background: var(--panel-bg); border: 1px solid var(--border-color);
             border-radius: 8px; width: 270px; min-width: 200px; min-height: 140px;
@@ -148,7 +159,12 @@
         .close-btn { color: var(--accent-red); cursor: pointer; font-weight: bold; font-size: 14px; padding: 4px; }
         .close-btn:hover { background: rgba(255, 51, 68, 0.2); border-radius: 3px; }
 
-        .node-body { padding: 10px; display: flex; flex-direction: column; gap: 8px; font-size: 10px; flex: 1; overflow-y: auto; touch-action: pan-y; }
+        .node-body { 
+            padding: 10px; display: flex; flex-direction: column; gap: 8px; font-size: 10px; flex: 1; 
+            overflow-y: auto !important; 
+            touch-action: pan-y !important;
+            -webkit-overflow-scrolling: touch;
+        }
         .ports-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px; }
         .port-group { display: flex; align-items: center; gap: 4px; font-size: 9px; color: var(--text-muted); font-weight: bold; }
         
@@ -181,7 +197,6 @@
         .step-cell.playing { border-color: var(--accent-yellow); transform: scale(1.1); }
 
         .ribbon-bar { width: 100%; height: 42px; background: linear-gradient(90deg, #ff2a74, #00f0ff, #ffe600); border-radius: 4px; cursor: pointer; touch-action: none; position: relative; }
-        .ribbon-hold-active { outline: 2px solid var(--accent-green); }
 
         .btn-act { background: var(--accent-cyan); color: #000; border: none; padding: 6px 8px; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 10px; width: 100%; margin-top: 2px; touch-action: manipulation; }
         .xy-pad { width: 100%; height: 80px; background: #08090c; border: 1px solid var(--border-color); position: relative; border-radius: 4px; cursor: crosshair; touch-action: none; flex-shrink: 0; }
@@ -195,6 +210,8 @@
 
     <div class="sidebar">
         <div class="brand-logo">MODULAR<span>LAB</span></div>
+
+        <button class="grid-toggle-btn" onclick="toggleGridTheme()">🌗 Grid Theme: Dark / Light</button>
 
         <div class="category-title">MODULATION & UTILITY</div>
         <button class="spawn-btn" onclick="createNode('lfo')">+ LFO Oscillator</button>
@@ -249,12 +266,19 @@
     </div>
 
     <script>
-        // 1. תיקון גלילה באייפד בתוך ה-Sidebar ובתוך התיבות
+        let isGridLight = false;
+        function toggleGridTheme() {
+            isGridLight = !isGridLight;
+            document.body.classList.toggle('grid-light-theme', isGridLight);
+        }
+
         document.addEventListener('touchmove', function(e) { 
             if (e.target.closest('.sidebar') || e.target.closest('.node-body')) {
-                return; 
+                return;
             }
-            e.preventDefault(); 
+            if (e.cancelable) {
+                e.preventDefault(); 
+            }
         }, { passive: false });
 
         let scale = 1;
@@ -335,7 +359,7 @@
 
         viewport.addEventListener('touchmove', (e) => {
             if (e.touches.length === 2) {
-                e.preventDefault();
+                if (e.cancelable) e.preventDefault();
                 const dist = Math.hypot(
                     e.touches[0].clientX - e.touches[1].clientX,
                     e.touches[0].clientY - e.touches[1].clientY
@@ -346,7 +370,7 @@
                 setZoom(scale * factor, midX, midY);
                 touchStartDist = dist;
             } else if (isPanning && e.touches.length === 1) {
-                e.preventDefault();
+                if (e.cancelable) e.preventDefault();
                 panX = e.touches[0].clientX - startPan.x;
                 panY = e.touches[0].clientY - startPan.y;
                 updateWorldTransform();
@@ -407,18 +431,21 @@
             param.setTargetAtTime(parseFloat(val), audioCtx.currentTime, 0.015);
         }
 
-        // 4. שינוי נושא/צבע לתיבות
         function setNodeTheme(nodeId, theme) {
             const nodeEl = document.getElementById(nodeId);
             if (!nodeEl) return;
             nodeEl.classList.remove('theme-light', 'theme-random');
             if (theme === 'light') {
                 nodeEl.classList.add('theme-light');
+                nodeEl.style.borderColor = '';
+                nodeEl.style.boxShadow = '';
             } else if (theme === 'random') {
                 nodeEl.classList.add('theme-random');
                 const randomHue = Math.floor(Math.random() * 360);
-                nodeEl.style.borderColor = `hsl(${randomHue}, 80%, 55%)`;
-                nodeEl.style.boxShadow = `0 10px 25px hsl(${randomHue}, 80%, 25%)`;
+                const randomSat = Math.floor(Math.random() * 30) + 70; // 70-100%
+                const randomLight = Math.floor(Math.random() * 20) + 50; // 50-70%
+                nodeEl.style.borderColor = `hsl(${randomHue}, ${randomSat}%, ${randomLight}%)`;
+                nodeEl.style.boxShadow = `0 10px 25px hsl(${randomHue}, ${randomSat}%, 20%)`;
             } else {
                 nodeEl.style.borderColor = '';
                 nodeEl.style.boxShadow = '';
@@ -433,7 +460,6 @@
             const node = document.createElement('div');
             node.className = 'node node-spawn-flash'; node.id = id;
             
-            // 3. הבהרה רגעית (Flash) בעת יצירה
             setTimeout(() => node.classList.remove('node-spawn-flash'), 650);
 
             const posX = worldX !== undefined ? worldX : (-panX + viewport.clientWidth / 2 - 100) / scale;
@@ -488,7 +514,6 @@
                         </select>
                     </div>`;
             }
-            // 2. Ribbon Synthesizer + Hold Button
             else if (type === 'ribbon') {
                 const osc = audioCtx.createOscillator();
                 const gain = audioCtx.createGain();
@@ -516,7 +541,6 @@
                         </select>
                     </div>`;
             }
-            // 6. Visual EQ (3-Band Point Draggable + Curves + Frequency Sine Wave)
             else if (type === 'visualeq') {
                 const low = audioCtx.createBiquadFilter(); low.type = 'lowshelf'; low.frequency.value = 250;
                 const mid = audioCtx.createBiquadFilter(); mid.type = 'peaking'; mid.frequency.value = 1000; mid.Q.value = 1;
@@ -543,7 +567,6 @@
                     <div class="row-flex">FREQ: <input type="range" min="40" max="2000" value="220" oninput="nodesRegistry['${id}'].osc.frequency.value=this.value"></div>
                     <div class="row-flex">WAVE: <select onchange="nodesRegistry['${id}'].osc.type=this.value"><option>sawtooth</option><option>sine</option><option>square</option><option>triangle</option></select></div>`;
             } 
-            // 8. Drum Machine (Authentic 808 Sounds)
             else if (type === 'drums') {
                 audioObj.steps = { bd: Array(8).fill(false), sd: Array(8).fill(false), hh: Array(8).fill(false) };
                 audioObj.gains = { bd: 0.8, sd: 0.6, hh: 0.4 };
@@ -572,7 +595,6 @@
                     <div class="row-flex">DENSITY: <input type="range" id="gr_dens_${id}" min="20" max="200" value="60" oninput="nodesRegistry['${id}'].density=parseInt(this.value)"></div>
                     <button class="btn-act" id="btn_gran_${id}" onclick="toggleGranular('${id}')">START GRANULAR PROCESSING 🔊</button>`;
             }
-            // 5. Degrader + LFO Visual Modulation
             else if (type === 'degrader') {
                 const shaper = audioCtx.createWaveShaper();
                 const lpf = audioCtx.createBiquadFilter(); lpf.type = 'lowpass'; lpf.frequency.value = 8000;
@@ -598,7 +620,6 @@
                     <div class="row-flex">CUTOFF: <input type="range" min="200" max="12000" step="100" value="8000" oninput="nodesRegistry['${id}'].lpf.frequency.value=this.value"></div>
                     <div class="row-flex">LFO MOD (DEPTH): <input type="range" min="0" max="4000" step="50" value="0" oninput="nodesRegistry['${id}'].lfoGain.gain.value=this.value"></div>`;
             }
-            // 5. Pitch Shifter + LFO Visual
             else if (type === 'pitchshift') {
                 const delay = audioCtx.createDelay(); delay.delayTime.value = 0.03;
                 const lfoOsc = audioCtx.createOscillator(); lfoOsc.frequency.value = 5; lfoOsc.start();
@@ -635,7 +656,6 @@
                     <div class="row-flex">TIME L: <input type="range" min="0.05" max="1" step="0.05" value="0.3" oninput="nodesRegistry['${id}'].delayL.delayTime.value=this.value"></div>
                     <div class="row-flex">TIME R: <input type="range" min="0.05" max="1" step="0.05" value="0.6" oninput="nodesRegistry['${id}'].delayR.delayTime.value=this.value"></div>`;
             }
-            // 9. Dodecaphonic Row + Melody 2 & Accompanyment Buttons
             else if (type === 'dodeca') {
                 audioObj.playMelody2 = false;
                 audioObj.playAccompany = false;
@@ -657,7 +677,6 @@
                     <div class="xy-pad" id="xypad_${id}"><div class="xy-pointer" id="xyptr_${id}" style="top:50%; left:50%"></div></div>
                     <button class="btn-act" id="btn_chaos_${id}" style="background:var(--accent-pink); color:#fff" onclick="toggleChaosLoop('${id}')">RUN CHAOS 🌀</button>`;
             }
-            // 7. 8-Step Sequencer (Tempo Knob + 8 Active Toggles)
             else if (type === 'seq') {
                 audioObj.seqSteps = Array(8).fill(true);
                 bodyHTML = `
@@ -700,7 +719,6 @@
                     <div class="row-flex">MASTER VOL: <input type="range" min="0" max="1" step="0.01" value="0.8" oninput="nodesRegistry['${id}'].masterGain.gain.value=this.value"></div>`;
             }
 
-            // 4. כפתורי ערכת צבעים/נושא לכל תיבה
             node.innerHTML = `
                 <div class="node-header">
                     <span>${type.toUpperCase()}</span>
@@ -713,9 +731,9 @@
                     </div>
                     ${bodyHTML}
                     <div class="theme-btn-group">
-                        <button class="theme-btn" onclick="setNodeTheme('${id}','dark')">כהה</button>
-                        <button class="theme-btn" onclick="setNodeTheme('${id}','light')">בהיר</button>
-                        <button class="theme-btn" onclick="setNodeTheme('${id}','random')">אקראי</button>
+                        <button class="theme-btn" onclick="setNodeTheme('${id}','dark')">Dark</button>
+                        <button class="theme-btn" onclick="setNodeTheme('${id}','light')">Light</button>
+                        <button class="theme-btn" onclick="setNodeTheme('${id}','random')">Random</button>
                     </div>
                 </div>`;
 
@@ -732,7 +750,6 @@
             return id;
         }
 
-        // 2. אתחול Ribbon Synthesizer
         function initRibbon(id) {
             setTimeout(() => {
                 const bar = document.getElementById(`ribbon_bar_${id}`);
@@ -743,7 +760,7 @@
                     const rect = bar.getBoundingClientRect();
                     const clientX = e.touches ? e.touches[0].clientX : e.clientX;
                     let normX = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
-                    let freq = 130.81 * Math.pow(2, normX * 3); // 3 Octaves (C3 -> C6)
+                    let freq = 130.81 * Math.pow(2, normX * 3);
                     nObj.osc.frequency.setTargetAtTime(freq, audioCtx.currentTime, 0.01);
                     nObj.gain.gain.setTargetAtTime(0.5, audioCtx.currentTime, 0.01);
                 };
@@ -765,7 +782,6 @@
             }, 50);
         }
 
-        // 5. ויזואליזציה של גל LFO בזמן אמת
         function initLfoScope(id) {
             setTimeout(() => {
                 const canvas = document.getElementById(`lfo_canvas_${id}`);
@@ -793,7 +809,6 @@
             }, 50);
         }
 
-        // 6. Visual EQ - גרף 3 נקודות גרירה, עקומה וסינוס תדרים
         function initVisualEQ(id) {
             setTimeout(() => {
                 const canvas = document.getElementById(`eq_canvas_${id}`);
@@ -813,7 +828,6 @@
 
                     ctx.fillStyle = '#08090c'; ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-                    // גל סינוס לתדרים
                     ctx.strokeStyle = 'rgba(0, 240, 255, 0.2)'; ctx.lineWidth = 1; ctx.beginPath();
                     for (let i = 0; i < bufferLength; i++) {
                         let x = (i / bufferLength) * canvas.width;
@@ -822,7 +836,6 @@
                     }
                     ctx.stroke();
 
-                    // עקומת EQ
                     const lowY = canvas.height / 2 - (nObj.low.gain.value * 1.2);
                     const midY = canvas.height / 2 - (nObj.mid.gain.value * 1.2);
                     const highY = canvas.height / 2 - (nObj.high.gain.value * 1.2);
@@ -837,7 +850,6 @@
                     ctx.quadraticCurveTo(pHigh.x, pHigh.y, canvas.width, pHigh.y);
                     ctx.stroke();
 
-                    // 3 נקודות גרירה
                     [pLow, pMid, pHigh].forEach((p, idx) => {
                         ctx.fillStyle = idx === 0 ? '#ff2a74' : (idx === 1 ? '#ffe600' : '#00f0ff');
                         ctx.beginPath(); ctx.arc(p.x, p.y, 5, 0, Math.PI * 2); ctx.fill();
@@ -845,7 +857,6 @@
                 }
                 drawEQ();
 
-                // גרירת הנקודות בגרף ה-EQ
                 const handlePointer = (e) => {
                     const rect = canvas.getBoundingClientRect();
                     const clientY = e.touches ? e.touches[0].clientY : e.clientY;
@@ -929,7 +940,6 @@
             soupLoop();
         }
 
-        // 9. Dodecaphonic Row + Melody 2 & Accompanyment
         function toggleDodecaLoop(nodeId) {
             let nObj = nodesRegistry[nodeId];
             let btn = document.getElementById(`btn_dodeca_${nodeId}`);
@@ -947,10 +957,10 @@
                 playSound(nodeId, freq, 0.15);
                 
                 if (nObj.playMelody2) {
-                    setTimeout(() => playSound(nodeId, freq * 1.5, 0.12), 75); // קווינטה
+                    setTimeout(() => playSound(nodeId, freq * 1.5, 0.12), 75);
                 }
                 if (nObj.playAccompany) {
-                    playSound(nodeId, freq * 0.5, 0.3); // אוקטבה למטה
+                    playSound(nodeId, freq * 0.5, 0.3);
                 }
 
                 setTimeout(nextNote, 150);
@@ -1007,7 +1017,7 @@
                 window.addEventListener('mouseup', () => { isInteracting = false; });
                 
                 pad.addEventListener('touchstart', (e) => { isInteracting = true; updateXY(e); }, {passive: false});
-                window.addEventListener('touchmove', (e) => { if (isInteracting) { e.preventDefault(); updateXY(e); } }, {passive: false});
+                window.addEventListener('touchmove', (e) => { if (isInteracting) { if (e.cancelable) e.preventDefault(); updateXY(e); } }, {passive: false});
                 window.addEventListener('touchend', () => { isInteracting = false; });
             }, 50);
         }
@@ -1068,7 +1078,6 @@
             el.classList.toggle('active');
         }
 
-        // 8. Drum Machine (סאונדים של 808 - Bass Drum, Snare, HiHat)
         function triggerDrums(nodeId) {
             let nObj = nodesRegistry[nodeId];
             let btn = document.getElementById(`btn_drum_${nodeId}`);
@@ -1153,7 +1162,6 @@
             osc.start(); osc.stop(audioCtx.currentTime + dur);
         }
 
-        // 7. 8-Step Sequencer
         function toggleSeqStep(nodeId, idx, el) {
             nodesRegistry[nodeId].seqSteps[idx] = !nodesRegistry[nodeId].seqSteps[idx];
             el.classList.toggle('active');
@@ -1172,7 +1180,6 @@
                 if (!nObj.isPlaying) return;
                 const bpm = parseInt(document.getElementById(`seq_bpm_${nodeId}`).value) || 140;
                 
-                // היילייט ויזואלי לצעדים
                 for(let i=0; i<8; i++) {
                     let cell = document.getElementById(`seq_cell_${nodeId}_${i}`);
                     if (cell) {
