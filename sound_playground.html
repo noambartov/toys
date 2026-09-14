@@ -2,7 +2,7 @@
 <html lang="he" dir="ltr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>MODULARLAB - Infinite Canvas & DSP Synth</title>
     <style>
         :root {
@@ -22,12 +22,16 @@
 
         html, body {
             width: 100vw; height: 100vh;
-            overflow: hidden; touch-action: none;
+            overflow: hidden; 
+            touch-action: none;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
             position: fixed; top: 0; left: 0;
             background-color: var(--bg-dark);
             color: var(--text-main);
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, monospace;
-            box-sizing: border-box; margin: 0; padding: 0; user-select: none;
+            box-sizing: border-box; margin: 0; padding: 0;
         }
 
         body { display: flex; }
@@ -38,6 +42,7 @@
             display: flex; flex-direction: column;
             padding: 15px 12px; gap: 8px; z-index: 100; overflow-y: auto;
             touch-action: pan-y;
+            -webkit-overflow-scrolling: touch;
         }
 
         .brand-logo { font-size: 18px; font-weight: 900; letter-spacing: 1.5px; color: #fff; margin-bottom: 5px; }
@@ -49,6 +54,7 @@
             color: var(--text-main); padding: 8px 10px; border-radius: 6px;
             font-size: 11px; font-weight: 600; text-align: left; cursor: pointer;
             transition: all 0.15s ease;
+            touch-action: manipulation;
         }
         .spawn-btn:hover { border-color: var(--accent-cyan); color: var(--accent-cyan); background: #222636; }
 
@@ -75,7 +81,7 @@
             position: absolute; top: 12px; left: 50%; transform: translateX(-50%);
             width: 380px; height: 48px; background: rgba(11, 12, 16, 0.85);
             border: 1px solid var(--accent-cyan); border-radius: 6px;
-            box-shadow: 0 0 12px rgba(0, 240, 255, 0.15); z-index: 90;
+            box-shadow: 0 0 12px rgba(0, 240, 255, 0.15); z-index: 90; pointer-events: none;
         }
         .scope-title { font-size: 8px; font-weight: 800; color: var(--accent-cyan); letter-spacing: 1px; padding: 3px 6px 0 6px; }
         canvas#scopeCanvas { width: 100%; height: 30px; }
@@ -87,6 +93,7 @@
         .preset-btn {
             background: var(--accent-cyan); color: #000; border: none;
             padding: 5px 8px; border-radius: 4px; font-size: 10px; font-weight: 700; cursor: pointer;
+            touch-action: manipulation;
         }
         .preset-btn.danger { background: rgba(255, 51, 68, 0.15); color: var(--accent-red); border: 1px solid var(--accent-red); }
 
@@ -94,7 +101,7 @@
             position: absolute; bottom: 12px; right: 12px; display: flex;
             gap: 6px; z-index: 90; background: rgba(19,21,28,0.8); padding: 4px; border-radius: 6px; border: 1px solid var(--border-color);
         }
-        .zoom-btn { background: #1c1f2b; color: #fff; border: 1px solid var(--border-color); width: 26px; height: 26px; border-radius: 4px; font-weight: bold; cursor: pointer; }
+        .zoom-btn { background: #1c1f2b; color: #fff; border: 1px solid var(--border-color); width: 26px; height: 26px; border-radius: 4px; font-weight: bold; cursor: pointer; touch-action: manipulation; }
         .zoom-btn:hover { border-color: var(--accent-cyan); color: var(--accent-cyan); }
 
         #svgCanvas { 
@@ -122,17 +129,17 @@
             background: rgba(255,255,255,0.03); border-bottom: 1px solid var(--border-color);
             padding: 6px 10px; font-size: 11px; font-weight: 700; cursor: grab;
             display: flex; justify-content: space-between; align-items: center; border-radius: 8px 8px 0 0;
-            flex-shrink: 0;
+            flex-shrink: 0; touch-action: none;
         }
-        .close-btn { color: var(--accent-red); cursor: pointer; font-weight: bold; font-size: 14px; }
+        .close-btn { color: var(--accent-red); cursor: pointer; font-weight: bold; font-size: 14px; padding: 4px; }
         .close-btn:hover { background: rgba(255, 51, 68, 0.2); border-radius: 3px; }
 
-        .node-body { padding: 10px; display: flex; flex-direction: column; gap: 8px; font-size: 10px; flex: 1; overflow-y: auto; }
+        .node-body { padding: 10px; display: flex; flex-direction: column; gap: 8px; font-size: 10px; flex: 1; overflow-y: auto; touch-action: pan-y; }
         .ports-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px; }
         .port-group { display: flex; align-items: center; gap: 4px; font-size: 9px; color: var(--text-muted); font-weight: bold; }
         
         .port {
-            width: 16px; height: 16px; background: #000; border: 2px solid var(--text-main);
+            width: 22px; height: 22px; background: #000; border: 2px solid var(--text-main);
             border-radius: 50%; cursor: pointer; display: inline-block; touch-action: none;
             box-sizing: border-box; flex-shrink: 0;
         }
@@ -142,17 +149,22 @@
 
         .mixer-channel { background: #0c0d12; border: 1px solid var(--border-color); padding: 6px; border-radius: 4px; margin-top: 4px; }
         .row-flex { display: flex; justify-content: space-between; align-items: center; gap: 4px; margin: 2px 0; }
-        input[type=range] { accent-color: var(--accent-cyan); width: 90px; }
-        select, input[type=number] { background: #08090c; color: #fff; border: 1px solid var(--border-color); padding: 2px 4px; font-size: 10px; border-radius: 3px; }
+        
+        input[type=range] { 
+            accent-color: var(--accent-cyan); width: 100px; height: 24px; touch-action: pan-x; 
+        }
+        select, input[type=number] { 
+            background: #08090c; color: #fff; border: 1px solid var(--border-color); padding: 4px; font-size: 11px; border-radius: 4px; touch-action: manipulation;
+        }
         
         .mini-seq { display: grid; grid-template-columns: repeat(8, 1fr); gap: 2px; flex: 1; }
-        .step-cell { aspect-ratio: 1; background: #08090c; border: 1px solid #242836; border-radius: 2px; cursor: pointer; }
+        .step-cell { aspect-ratio: 1; background: #08090c; border: 1px solid #242836; border-radius: 2px; cursor: pointer; touch-action: manipulation; }
         .step-cell.active { background: var(--accent-green); box-shadow: 0 0 5px var(--accent-green); }
         .step-cell.playing { border-color: var(--accent-yellow); transform: scale(1.1); }
 
-        .btn-act { background: var(--accent-cyan); color: #000; border: none; padding: 5px 8px; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 10px; width: 100%; margin-top: 2px; }
+        .btn-act { background: var(--accent-cyan); color: #000; border: none; padding: 6px 8px; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 10px; width: 100%; margin-top: 2px; touch-action: manipulation; }
         .xy-pad { width: 100%; height: 80px; background: #08090c; border: 1px solid var(--border-color); position: relative; border-radius: 4px; cursor: crosshair; touch-action: none; flex-shrink: 0; }
-        .xy-pointer { width: 10px; height: 10px; background: var(--accent-pink); border: 1px solid #fff; border-radius: 50%; position: absolute; transform: translate(-50%, -50%); pointer-events: none; }
+        .xy-pointer { width: 12px; height: 12px; background: var(--accent-pink); border: 1px solid #fff; border-radius: 50%; position: absolute; transform: translate(-50%, -50%); pointer-events: none; }
         .eq-canvas { width: 100%; height: 60px; background: #08090c; border: 1px solid var(--border-color); border-radius: 4px; }
     </style>
 </head>
@@ -213,7 +225,13 @@
     </div>
 
     <script>
-        document.addEventListener('touchmove', function(e) { e.preventDefault(); }, { passive: false });
+        // מניעת גלילת העמוד הראשית ב-iPad Safari
+        document.addEventListener('touchmove', function(e) { 
+            if (e.target.closest('.sidebar') || e.target.closest('.node-body')) {
+                return; // מאפשר גלילה בתוך ה-Sidebar או הפאנל
+            }
+            e.preventDefault(); 
+        }, { passive: false });
 
         let scale = 1;
         let panX = 0;
@@ -289,10 +307,11 @@
                 isPanning = true;
                 startPan = { x: e.touches[0].clientX - panX, y: e.touches[0].clientY - panY };
             }
-        });
+        }, { passive: false });
 
         viewport.addEventListener('touchmove', (e) => {
             if (e.touches.length === 2) {
+                e.preventDefault();
                 const dist = Math.hypot(
                     e.touches[0].clientX - e.touches[1].clientX,
                     e.touches[0].clientY - e.touches[1].clientY
@@ -303,6 +322,7 @@
                 setZoom(scale * factor, midX, midY);
                 touchStartDist = dist;
             } else if (isPanning && e.touches.length === 1) {
+                e.preventDefault();
                 panX = e.touches[0].clientX - startPan.x;
                 panY = e.touches[0].clientY - startPan.y;
                 updateWorldTransform();
@@ -329,6 +349,7 @@
 
         function drawScope() {
             const canvas = document.getElementById('scopeCanvas');
+            if (!canvas) return;
             const ctx = canvas.getContext('2d');
             const bufferLength = analyserNode.frequencyBinCount;
             const dataArray = new Uint8Array(bufferLength);
@@ -742,8 +763,9 @@
                 pad.onmousedown = (e) => { isInteracting = true; updateXY(e); };
                 window.addEventListener('mousemove', (e) => { if (isInteracting) updateXY(e); });
                 window.addEventListener('mouseup', () => { isInteracting = false; });
-                pad.ontouchstart = (e) => { isInteracting = true; updateXY(e); };
-                window.addEventListener('touchmove', (e) => { if (isInteracting) updateXY(e); }, {passive: false});
+                
+                pad.addEventListener('touchstart', (e) => { isInteracting = true; updateXY(e); }, {passive: false});
+                window.addEventListener('touchmove', (e) => { if (isInteracting) { e.preventDefault(); updateXY(e); } }, {passive: false});
                 window.addEventListener('touchend', () => { isInteracting = false; });
             }, 50);
         }
@@ -903,7 +925,9 @@
         function makeDraggable(node) {
             const header = node.querySelector('.node-header');
             const startDrag = (e) => {
+                if (e.target.classList.contains('close-btn')) return;
                 e.stopPropagation();
+                
                 const clientX = e.touches ? e.touches[0].clientX : e.clientX;
                 const clientY = e.touches ? e.touches[0].clientY : e.clientY;
                 let startLeft = parseFloat(node.style.left);
@@ -918,20 +942,21 @@
                 }
 
                 function onMove(e) {
+                    if (e.cancelable) e.preventDefault();
                     const cx = e.touches ? e.touches[0].clientX : e.clientX;
                     const cy = e.touches ? e.touches[0].clientY : e.clientY;
                     moveAt(cx, cy);
                 }
 
-                document.addEventListener('mousemove', onMove);
-                document.addEventListener('touchmove', onMove, { passive: false });
+                window.addEventListener('mousemove', onMove);
+                window.addEventListener('touchmove', onMove, { passive: false });
 
                 const stopDrag = () => {
-                    document.removeEventListener('mousemove', onMove);
-                    document.removeEventListener('touchmove', onMove);
+                    window.removeEventListener('mousemove', onMove);
+                    window.removeEventListener('touchmove', onMove);
                 };
-                document.onmouseup = stopDrag;
-                document.ontouchend = stopDrag;
+                window.onmouseup = stopDrag;
+                window.ontouchend = stopDrag;
             };
 
             header.onmousedown = startDrag;
@@ -943,6 +968,8 @@
             scope.querySelectorAll('.port').forEach(port => {
                 const startCable = (e) => {
                     e.stopPropagation();
+                    if (e.cancelable) e.preventDefault();
+
                     if (port.classList.contains('out')) {
                         const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
                         path.setAttribute('class', 'cable dragging');
@@ -962,6 +989,7 @@
 
         const handleMove = (e) => {
             if (draggingCable) {
+                if (e.cancelable) e.preventDefault();
                 const cx = e.touches ? e.touches[0].clientX : e.clientX;
                 const cy = e.touches ? e.touches[0].clientY : e.clientY;
                 const p1 = getPortWorldCenter(document.getElementById(draggingCable.fromPortId));
@@ -973,13 +1001,15 @@
                 drawBezier(draggingCable.path, p1.x, p1.y, targetX, targetY);
             }
         };
-        window.onmousemove = handleMove;
-        window.ontouchmove = handleMove;
+        window.addEventListener('mousemove', handleMove);
+        window.addEventListener('touchmove', handleMove, { passive: false });
 
         const handleEnd = (e) => {
             if (draggingCable) {
                 const cx = e.changedTouches ? e.changedTouches[0].clientX : e.clientX;
                 const cy = e.changedTouches ? e.changedTouches[0].clientY : e.clientY;
+                
+                // זיהוי פורט מטרה באייפד לפי מיקום אצבע
                 const targetPort = document.elementFromPoint(cx, cy);
 
                 if (targetPort && targetPort.classList.contains('in')) {
@@ -1018,7 +1048,7 @@
                     };
 
                     draggingCable.path.onclick = () => removeCable(cableObj);
-                    draggingCable.path.ontouchstart = () => removeCable(cableObj);
+                    draggingCable.path.ontouchstart = (e) => { e.stopPropagation(); removeCable(cableObj); };
 
                     activeCables.push(cableObj);
                     updateCables();
@@ -1028,8 +1058,8 @@
                 draggingCable = null;
             }
         };
-        window.onmouseup = handleEnd;
-        window.ontouchend = handleEnd;
+        window.addEventListener('mouseup', handleEnd);
+        window.addEventListener('touchend', handleEnd);
 
         function removeCable(cableObj) {
             try { cableObj.srcAudio.disconnect(cableObj.targetAudio); } catch(e){}
@@ -1039,6 +1069,7 @@
         }
 
         function getPortWorldCenter(elem) {
+            if (!elem) return { x: 0, y: 0 };
             const box = elem.getBoundingClientRect();
             const viewportRect = viewport.getBoundingClientRect();
             const screenX = box.left + box.width / 2 - viewportRect.left;
@@ -1059,9 +1090,13 @@
 
         function updateCables() {
             activeCables.forEach(c => {
-                const p1 = getPortWorldCenter(document.getElementById(c.fromPortId));
-                const p2 = getPortWorldCenter(document.getElementById(c.toPortId));
-                drawBezier(c.path, p1.x, p1.y, p2.x, p2.y);
+                const p1Elem = document.getElementById(c.fromPortId);
+                const p2Elem = document.getElementById(c.toPortId);
+                if (p1Elem && p2Elem) {
+                    const p1 = getPortWorldCenter(p1Elem);
+                    const p2 = getPortWorldCenter(p2Elem);
+                    drawBezier(c.path, p1.x, p1.y, p2.x, p2.y);
+                }
             });
         }
 
